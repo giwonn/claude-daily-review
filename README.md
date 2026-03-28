@@ -1,5 +1,7 @@
 # claude-daily-review
 
+[한국어](README.ko.md)
+
 Claude Code plugin that automatically captures your conversations and generates structured daily review markdown files in your Obsidian vault or GitHub repository.
 
 Turn your daily AI-assisted development work into career documentation — automatically.
