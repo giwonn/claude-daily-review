@@ -108,11 +108,13 @@ After they provide a path:
 
 ### Step 2: Profile
 
-Ask the user these questions one at a time:
-1. "어떤 회사에서 일하고 계신가요? (선택사항, 엔터로 건너뛰기)"
-2. "역할/직무가 뭔가요? (예: 프론트엔드 개발자)"
-3. "팀이나 담당 도메인이 있다면? (예: 결제플랫폼팀)"
-4. "하고 계신 일을 한 줄로 설명하면? (예: B2B SaaS 결제 시스템 개발 및 운영)"
+Ask the user all profile questions at once using AskUserQuestion with these fields:
+- "회사명" (text input, optional — leave empty to skip)
+- "역할/직무" (text input, e.g. "프론트엔드 개발자")
+- "팀/담당 도메인" (text input, optional, e.g. "결제플랫폼팀")
+- "하는 일 한 줄 설명" (text input, e.g. "B2B SaaS 결제 시스템 개발 및 운영")
+
+If the user leaves a field empty, store it as an empty string.
 
 ### Step 3: Periods
 
