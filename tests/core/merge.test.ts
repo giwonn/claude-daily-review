@@ -1,14 +1,9 @@
+// tests/core/merge.test.ts
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import {
-  mkdtempSync,
-  rmSync,
-  mkdirSync,
-  writeFileSync,
-  readFileSync,
-  existsSync,
-} from "fs";
+import { mkdtempSync, rmSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
+import { LocalStorageAdapter } from "../../src/core/local-storage.js";
 import {
   findUnprocessedSessions,
   findPendingReviews,
@@ -19,18 +14,14 @@ import {
 
 describe("merge", () => {
   let tempDir: string;
-  let rawDir: string;
-  let reviewsDir: string;
-  let dailyDir: string;
+  let storage: LocalStorageAdapter;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     tempDir = mkdtempSync(join(tmpdir(), "cdr-merge-"));
-    rawDir = join(tempDir, ".raw");
-    reviewsDir = join(tempDir, ".reviews");
-    dailyDir = join(tempDir, "daily");
-    mkdirSync(rawDir, { recursive: true });
-    mkdirSync(reviewsDir, { recursive: true });
-    mkdirSync(dailyDir, { recursive: true });
+    storage = new LocalStorageAdapter(tempDir);
+    await storage.mkdir(".raw");
+    await storage.mkdir(".reviews");
+    await storage.mkdir("daily");
   });
 
   afterEach(() => {
@@ -38,112 +29,95 @@ describe("merge", () => {
   });
 
   describe("findUnprocessedSessions", () => {
-    it("returns empty array when no sessions exist", () => {
-      const result = findUnprocessedSessions(rawDir);
+    it("returns empty array when no sessions exist", async () => {
+      const result = await findUnprocessedSessions(storage, ".raw");
       expect(result).toEqual([]);
     });
 
-    it("returns session dirs without .completed marker", () => {
-      mkdirSync(join(rawDir, "sess-1"));
-      writeFileSync(join(rawDir, "sess-1", "2026-03-28.jsonl"), "{}");
+    it("returns session dirs without .completed marker", async () => {
+      await storage.write(".raw/sess-1/2026-03-28.jsonl", "{}");
+      await storage.write(".raw/sess-2/2026-03-28.jsonl", "{}");
+      await storage.write(".raw/sess-2/.completed", "");
 
-      mkdirSync(join(rawDir, "sess-2"));
-      writeFileSync(join(rawDir, "sess-2", "2026-03-28.jsonl"), "{}");
-      writeFileSync(join(rawDir, "sess-2", ".completed"), "");
-
-      const result = findUnprocessedSessions(rawDir);
+      const result = await findUnprocessedSessions(storage, ".raw");
       expect(result).toEqual(["sess-1"]);
     });
 
-    it("ignores non-directory entries", () => {
-      writeFileSync(join(rawDir, "stray-file.txt"), "");
-      const result = findUnprocessedSessions(rawDir);
+    it("ignores non-directory entries", async () => {
+      await storage.write(".raw/stray-file.txt", "");
+      const result = await findUnprocessedSessions(storage, ".raw");
       expect(result).toEqual([]);
     });
   });
 
   describe("findPendingReviews", () => {
-    it("returns empty array when no reviews exist", () => {
-      const result = findPendingReviews(reviewsDir);
+    it("returns empty array when no reviews exist", async () => {
+      const result = await findPendingReviews(storage, ".reviews");
       expect(result).toEqual([]);
     });
 
-    it("returns .md files in reviews directory", () => {
-      writeFileSync(join(reviewsDir, "sess-1.md"), "# Review");
-      writeFileSync(join(reviewsDir, "sess-2.md"), "# Review 2");
-      const result = findPendingReviews(reviewsDir);
+    it("returns .md files in reviews directory", async () => {
+      await storage.write(".reviews/sess-1.md", "# Review");
+      await storage.write(".reviews/sess-2.md", "# Review 2");
+      const result = await findPendingReviews(storage, ".reviews");
       expect(result.sort()).toEqual(["sess-1.md", "sess-2.md"]);
     });
 
-    it("ignores non-md files", () => {
-      writeFileSync(join(reviewsDir, "sess-1.md"), "# Review");
-      writeFileSync(join(reviewsDir, "notes.txt"), "text");
-      const result = findPendingReviews(reviewsDir);
+    it("ignores non-md files", async () => {
+      await storage.write(".reviews/sess-1.md", "# Review");
+      await storage.write(".reviews/notes.txt", "text");
+      const result = await findPendingReviews(storage, ".reviews");
       expect(result).toEqual(["sess-1.md"]);
     });
   });
 
   describe("markSessionCompleted / isSessionCompleted", () => {
-    it("creates .completed marker", () => {
-      const sessDir = join(rawDir, "sess-1");
-      mkdirSync(sessDir);
-      expect(isSessionCompleted(sessDir)).toBe(false);
+    it("creates .completed marker", async () => {
+      await storage.mkdir(".raw/sess-1");
+      expect(await isSessionCompleted(storage, ".raw/sess-1")).toBe(false);
 
-      markSessionCompleted(sessDir);
-      expect(isSessionCompleted(sessDir)).toBe(true);
-      expect(existsSync(join(sessDir, ".completed"))).toBe(true);
+      await markSessionCompleted(storage, ".raw/sess-1");
+      expect(await isSessionCompleted(storage, ".raw/sess-1")).toBe(true);
     });
   });
 
   describe("mergeReviewsIntoDaily", () => {
-    it("creates daily file from single review", () => {
-      const review = "## [my-app] Auth work\n**작업 요약:** JWT 구현\n";
-      writeFileSync(join(reviewsDir, "sess-1.md"), review);
+    it("creates daily file from single review", async () => {
+      await storage.write(".reviews/sess-1.md", "## [my-app] Auth work\n**작업 요약:** JWT 구현\n");
 
-      const dailyPath = join(dailyDir, "2026-03-28.md");
-      mergeReviewsIntoDaily([join(reviewsDir, "sess-1.md")], dailyPath);
+      await mergeReviewsIntoDaily(storage, [".reviews/sess-1.md"], "daily/2026-03-28.md");
 
-      const content = readFileSync(dailyPath, "utf-8");
+      const content = await storage.read("daily/2026-03-28.md");
       expect(content).toContain("[my-app] Auth work");
     });
 
-    it("appends to existing daily file", () => {
-      const existing = "# 2026-03-28 Daily Review\n\n## [blog] SEO work\nDone.\n";
-      const dailyPath = join(dailyDir, "2026-03-28.md");
-      writeFileSync(dailyPath, existing);
+    it("appends to existing daily file", async () => {
+      await storage.write("daily/2026-03-28.md", "# 2026-03-28 Daily Review\n\n## [blog] SEO work\nDone.\n");
+      await storage.write(".reviews/sess-2.md", "\n## [my-app] Auth work\n**작업 요약:** JWT 구현\n");
 
-      const newReview = "\n## [my-app] Auth work\n**작업 요약:** JWT 구현\n";
-      writeFileSync(join(reviewsDir, "sess-2.md"), newReview);
+      await mergeReviewsIntoDaily(storage, [".reviews/sess-2.md"], "daily/2026-03-28.md");
 
-      mergeReviewsIntoDaily([join(reviewsDir, "sess-2.md")], dailyPath);
-
-      const content = readFileSync(dailyPath, "utf-8");
+      const content = await storage.read("daily/2026-03-28.md");
       expect(content).toContain("[blog] SEO work");
       expect(content).toContain("[my-app] Auth work");
     });
 
-    it("merges multiple reviews", () => {
-      writeFileSync(join(reviewsDir, "sess-1.md"), "## Session 1 content\n");
-      writeFileSync(join(reviewsDir, "sess-2.md"), "## Session 2 content\n");
+    it("merges multiple reviews", async () => {
+      await storage.write(".reviews/sess-1.md", "## Session 1 content\n");
+      await storage.write(".reviews/sess-2.md", "## Session 2 content\n");
 
-      const dailyPath = join(dailyDir, "2026-03-28.md");
-      mergeReviewsIntoDaily(
-        [join(reviewsDir, "sess-1.md"), join(reviewsDir, "sess-2.md")],
-        dailyPath,
-      );
+      await mergeReviewsIntoDaily(storage, [".reviews/sess-1.md", ".reviews/sess-2.md"], "daily/2026-03-28.md");
 
-      const content = readFileSync(dailyPath, "utf-8");
+      const content = await storage.read("daily/2026-03-28.md");
       expect(content).toContain("Session 1 content");
       expect(content).toContain("Session 2 content");
     });
 
-    it("handles empty review files gracefully", () => {
-      writeFileSync(join(reviewsDir, "sess-empty.md"), "");
-      const dailyPath = join(dailyDir, "2026-03-28.md");
-
-      expect(() =>
-        mergeReviewsIntoDaily([join(reviewsDir, "sess-empty.md")], dailyPath),
-      ).not.toThrow();
+    it("handles empty review files gracefully", async () => {
+      await storage.write(".reviews/sess-empty.md", "");
+      await expect(
+        mergeReviewsIntoDaily(storage, [".reviews/sess-empty.md"], "daily/2026-03-28.md"),
+      ).resolves.not.toThrow();
     });
   });
 });
