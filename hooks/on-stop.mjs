@@ -16,20 +16,18 @@ function getLastUserMessage(transcriptPath) {
   try {
     const content = readFileSync(transcriptPath, 'utf-8');
     const lines = content.trim().split('\n');
-    // Walk backwards to find the last user message
+    // Walk backwards to find the last real user text message (not tool_result)
     for (let i = lines.length - 1; i >= 0; i--) {
       try {
         const entry = JSON.parse(lines[i]);
-        if (entry.type === 'human' || entry.role === 'user') {
-          // Extract text content
-          if (typeof entry.message === 'string') return entry.message;
-          if (entry.message?.content) {
-            if (typeof entry.message.content === 'string') return entry.message.content;
-            if (Array.isArray(entry.message.content)) {
-              const textPart = entry.message.content.find(p => p.type === 'text');
-              if (textPart) return textPart.text;
-            }
-          }
+        if (entry.type !== 'user') continue;
+        const msgContent = entry.message?.content;
+        // String content = direct user message
+        if (typeof msgContent === 'string' && msgContent.trim()) return msgContent;
+        // Array content = check for text parts (skip tool_result entries)
+        if (Array.isArray(msgContent)) {
+          const textPart = msgContent.find(p => p.type === 'text' && p.text?.trim());
+          if (textPart) return textPart.text;
         }
       } catch { continue; }
     }
