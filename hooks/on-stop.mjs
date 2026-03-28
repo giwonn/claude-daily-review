@@ -8,31 +8,29 @@ import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { dirname, join } from 'path';
 
 /**
- * Read the last user message from transcript file
+ * Read the last user message and its timestamp from transcript file
  * @param {string} transcriptPath
- * @returns {string}
+ * @returns {{ message: string, timestamp: string }}
  */
-function getLastUserMessage(transcriptPath) {
+function getLastUserEntry(transcriptPath) {
   try {
     const content = readFileSync(transcriptPath, 'utf-8');
     const lines = content.trim().split('\n');
-    // Walk backwards to find the last real user text message (not tool_result)
     for (let i = lines.length - 1; i >= 0; i--) {
       try {
         const entry = JSON.parse(lines[i]);
         if (entry.type !== 'user') continue;
         const msgContent = entry.message?.content;
-        // String content = direct user message
-        if (typeof msgContent === 'string' && msgContent.trim()) return msgContent;
-        // Array content = check for text parts (skip tool_result entries)
+        const ts = entry.timestamp || '';
+        if (typeof msgContent === 'string' && msgContent.trim()) return { message: msgContent, timestamp: ts };
         if (Array.isArray(msgContent)) {
           const textPart = msgContent.find(p => p.type === 'text' && p.text?.trim());
-          if (textPart) return textPart.text;
+          if (textPart) return { message: textPart.text, timestamp: ts };
         }
       } catch { continue; }
     }
   } catch { /* transcript not accessible */ }
-  return '';
+  return { message: '', timestamp: '' };
 }
 
 async function main() {
@@ -45,10 +43,16 @@ async function main() {
     for await (const chunk of process.stdin) { data += chunk; }
     const input = parseHookInput(data);
 
-    // Add last user message from transcript
+    // Get user message + timestamp from transcript
+    let userMessage = '';
+    let userTimestamp = '';
     if (input.transcript_path) {
-      input.last_user_message = getLastUserMessage(input.transcript_path);
+      const userEntry = getLastUserEntry(input.transcript_path);
+      userMessage = userEntry.message;
+      userTimestamp = userEntry.timestamp;
     }
+    input.last_user_message = userMessage;
+    input.user_timestamp = userTimestamp;
 
     const sessionDir = getRawDir(input.session_id);
     const date = formatDate(new Date());
