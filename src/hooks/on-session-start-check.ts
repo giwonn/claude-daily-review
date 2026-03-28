@@ -3,10 +3,12 @@ import { loadConfig } from "../core/config.js";
 try {
   const config = loadConfig();
   if (!config) {
-    process.stderr.write("daily-review: 설정이 없습니다. /daily-review-setup 을 실행해주세요.\n");
-    process.exit(2);
+    process.stdout.write(JSON.stringify({
+      result: "daily-review 플러그인이 아직 설정되지 않았습니다. /daily-review-setup 을 실행해주세요."
+    }));
   }
 } catch {
-  process.stderr.write("daily-review: 설정이 없습니다. /daily-review-setup 을 실행해주세요.\n");
-  process.exit(2);
+  process.stdout.write(JSON.stringify({
+    result: "daily-review 플러그인이 아직 설정되지 않았습니다. /daily-review-setup 을 실행해주세요."
+  }));
 }
