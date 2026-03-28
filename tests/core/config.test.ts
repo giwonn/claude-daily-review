@@ -7,8 +7,11 @@ import {
   loadConfig,
   saveConfig,
   validateConfig,
-  createDefaultConfig,
+  createDefaultLocalConfig,
+  createDefaultGitHubConfig,
+  createStorageAdapter,
 } from "../../src/core/config.js";
+import { LocalStorageAdapter } from "../../src/core/local-storage.js";
 
 describe("config", () => {
   let tempDir: string;
@@ -26,8 +29,7 @@ describe("config", () => {
 
   describe("getConfigPath", () => {
     it("returns path under CLAUDE_PLUGIN_DATA", () => {
-      const result = getConfigPath();
-      expect(result).toBe(join(tempDir, "config.json"));
+      expect(getConfigPath()).toBe(join(tempDir, "config.json"));
     });
 
     it("throws when CLAUDE_PLUGIN_DATA is not set", () => {
@@ -38,27 +40,36 @@ describe("config", () => {
 
   describe("loadConfig", () => {
     it("returns null when config does not exist", () => {
-      const result = loadConfig();
-      expect(result).toBeNull();
+      expect(loadConfig()).toBeNull();
     });
 
-    it("returns parsed config when file exists", () => {
-      const config = {
+    it("returns parsed config with local storage", () => {
+      const config = createDefaultLocalConfig("/my/vault/daily-review");
+      saveConfig(config);
+      const result = loadConfig();
+      expect(result).toEqual(config);
+    });
+
+    it("migrates old config format", () => {
+      const oldConfig = {
         vaultPath: "/my/vault",
         reviewFolder: "daily-review",
         language: "ko",
         periods: { daily: true, weekly: true, monthly: true, quarterly: true, yearly: false },
         profile: { company: "Test", role: "Dev", team: "A", context: "B" },
       };
-      writeFileSync(join(tempDir, "config.json"), JSON.stringify(config));
+      writeFileSync(join(tempDir, "config.json"), JSON.stringify(oldConfig));
       const result = loadConfig();
-      expect(result).toEqual(config);
+      expect(result!.storage.type).toBe("local");
+      expect(result!.storage.local!.basePath).toContain("daily-review");
+      expect(result!.language).toBe("ko");
+      expect(result!.profile.company).toBe("Test");
     });
   });
 
   describe("saveConfig", () => {
     it("writes config to disk", () => {
-      const config = createDefaultConfig("/my/vault");
+      const config = createDefaultLocalConfig("/my/vault");
       saveConfig(config);
       const raw = readFileSync(join(tempDir, "config.json"), "utf-8");
       expect(JSON.parse(raw)).toEqual(config);
@@ -66,24 +77,23 @@ describe("config", () => {
 
     it("creates parent directories if needed", () => {
       process.env.CLAUDE_PLUGIN_DATA = join(tempDir, "nested", "dir");
-      const config = createDefaultConfig("/my/vault");
+      const config = createDefaultLocalConfig("/my/vault");
       saveConfig(config);
       expect(existsSync(join(tempDir, "nested", "dir", "config.json"))).toBe(true);
     });
   });
 
   describe("validateConfig", () => {
-    it("returns true for valid config", () => {
-      const config = createDefaultConfig("/my/vault");
-      expect(validateConfig(config)).toBe(true);
+    it("returns true for valid local config", () => {
+      expect(validateConfig(createDefaultLocalConfig("/my/vault"))).toBe(true);
     });
 
-    it("returns false when vaultPath is missing", () => {
-      expect(validateConfig({ reviewFolder: "test" })).toBe(false);
+    it("returns true for valid github config", () => {
+      expect(validateConfig(createDefaultGitHubConfig("user", "repo", "token123"))).toBe(true);
     });
 
-    it("returns false when vaultPath is empty string", () => {
-      expect(validateConfig({ vaultPath: "" })).toBe(false);
+    it("returns false when storage is missing", () => {
+      expect(validateConfig({ language: "ko" })).toBe(false);
     });
 
     it("returns false for null", () => {
@@ -95,21 +105,39 @@ describe("config", () => {
     });
   });
 
-  describe("createDefaultConfig", () => {
-    it("creates config with defaults and given vaultPath", () => {
-      const config = createDefaultConfig("/my/vault");
-      expect(config.vaultPath).toBe("/my/vault");
-      expect(config.reviewFolder).toBe("daily-review");
+  describe("createDefaultLocalConfig", () => {
+    it("creates config with local storage", () => {
+      const config = createDefaultLocalConfig("/my/vault");
+      expect(config.storage.type).toBe("local");
+      expect(config.storage.local!.basePath).toBe("/my/vault");
       expect(config.language).toBe("ko");
       expect(config.periods.daily).toBe(true);
-      expect(config.periods.weekly).toBe(true);
-      expect(config.periods.monthly).toBe(true);
-      expect(config.periods.quarterly).toBe(true);
-      expect(config.periods.yearly).toBe(false);
       expect(config.profile.company).toBe("");
-      expect(config.profile.role).toBe("");
-      expect(config.profile.team).toBe("");
-      expect(config.profile.context).toBe("");
+    });
+  });
+
+  describe("createDefaultGitHubConfig", () => {
+    it("creates config with github storage", () => {
+      const config = createDefaultGitHubConfig("user", "repo", "tok");
+      expect(config.storage.type).toBe("github");
+      expect(config.storage.github!.owner).toBe("user");
+      expect(config.storage.github!.repo).toBe("repo");
+      expect(config.storage.github!.token).toBe("tok");
+      expect(config.storage.github!.basePath).toBe("daily-review");
+    });
+  });
+
+  describe("createStorageAdapter", () => {
+    it("returns LocalStorageAdapter for local config", () => {
+      const config = createDefaultLocalConfig("/my/vault");
+      const adapter = createStorageAdapter(config);
+      expect(adapter).toBeInstanceOf(LocalStorageAdapter);
+    });
+
+    it("throws for unknown storage type", () => {
+      const config = createDefaultLocalConfig("/my/vault");
+      (config.storage as any).type = "unknown";
+      expect(() => createStorageAdapter(config)).toThrow("Unknown storage type");
     });
   });
 });
