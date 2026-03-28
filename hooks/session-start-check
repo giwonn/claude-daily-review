@@ -4,15 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-result=$(node -e "
-import { loadConfig } from '${PLUGIN_ROOT}/lib/config.mjs';
-try {
-  const config = loadConfig();
-  if (!config) process.stdout.write('NEEDS_SETUP');
-} catch {
-  process.stdout.write('NEEDS_SETUP');
-}
-" 2>/dev/null || echo "NEEDS_SETUP")
+result=$(node "${PLUGIN_ROOT}/lib/check-config.mjs" 2>/dev/null || echo "NEEDS_SETUP")
 
 if [ "$result" = "NEEDS_SETUP" ]; then
   msg='<important-reminder>IN YOUR FIRST REPLY YOU MUST TELL THE USER: daily-review 플러그인이 아직 설정되지 않았습니다. /daily-review-setup 을 실행해주세요.</important-reminder>'

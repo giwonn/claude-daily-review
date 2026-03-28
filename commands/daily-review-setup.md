@@ -60,7 +60,7 @@ Ask:
 - **Existing:** Ask for the repository in `owner/repo` format. Parse into `owner` and `repo`.
 - **New:** Ask for a repo name. Create it via Bash:
   ```bash
-  gh api /user/repos -X POST -f name=<name> -f private=true
+  MSYS_NO_PATHCONV=1 gh api /user/repos -X POST -f name=<name> -f private=true
   ```
   If `gh` is not available, tell the user to create the repo at https://github.com/new and then provide the `owner/repo`.
 
