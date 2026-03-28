@@ -27,9 +27,9 @@
       {
         "hooks": [
           {
-            "type": "agent",
-            "prompt": "Follow the instructions in the file at ${CLAUDE_PLUGIN_ROOT}/prompts/session-start.md exactly. The CLAUDE_PLUGIN_DATA directory is: ${CLAUDE_PLUGIN_DATA}. The plugin root is: ${CLAUDE_PLUGIN_ROOT}",
-            "timeout": 180
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/on-session-start-check.js\"",
+            "timeout": 5
           }
         ]
       }
