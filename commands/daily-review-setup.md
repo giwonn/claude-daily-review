@@ -20,31 +20,17 @@ First, read `${CLAUDE_PLUGIN_DATA}/config.json` to see if a config already exist
 
 Ask the user:
 > "회고를 어디에 저장할까요?"
-> 1. 로컬 폴더 (Obsidian vault 등)
-> 2. GitHub 저장소
+> 1. GitHub 저장소
+> 2. 로컬 폴더 (Obsidian vault 등)
 
-#### Option 1: Local Storage
-
-Proceed to Step 1 (Vault Path) below. The storage config will be:
-```json
-{
-  "storage": {
-    "type": "local",
-    "local": {
-      "basePath": "<path>/daily-review"
-    }
-  }
-}
-```
-
-#### Option 2: GitHub Storage
+#### Option 1: GitHub Storage
 
 **2a. Authenticate with GitHub OAuth Device Flow:**
 
 Run via Bash:
 ```bash
 node -e "
-const { requestDeviceCode } = require('${CLAUDE_PLUGIN_ROOT}/dist/core/github-auth.js');
+const { requestDeviceCode } = await import('${CLAUDE_PLUGIN_ROOT}/lib/github-auth.mjs');
 requestDeviceCode().then(r => console.log(JSON.stringify(r)));
 "
 ```
@@ -57,7 +43,7 @@ Show the user:
 Then poll for the token:
 ```bash
 node -e "
-const { pollForToken } = require('${CLAUDE_PLUGIN_ROOT}/dist/core/github-auth.js');
+const { pollForToken } = await import('${CLAUDE_PLUGIN_ROOT}/lib/github-auth.mjs');
 pollForToken('{device_code}', {interval}).then(r => console.log(JSON.stringify(r)));
 "
 ```
@@ -94,6 +80,20 @@ The storage config will be:
 ```
 
 After storage selection, proceed to Step 2 (Profile). Skip Step 1 (Vault Path) for GitHub storage.
+
+#### Option 2: Local Storage
+
+Proceed to Step 1 (Vault Path) below. The storage config will be:
+```json
+{
+  "storage": {
+    "type": "local",
+    "local": {
+      "basePath": "<path>/daily-review"
+    }
+  }
+}
+```
 
 ### Step 1: Vault Path (Local storage only)
 
