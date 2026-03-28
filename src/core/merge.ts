@@ -3,16 +3,21 @@ import {
   readFileSync,
   writeFileSync,
   existsSync,
+  mkdirSync,
   statSync,
 } from "fs";
-import { join } from "path";
+import { dirname, join } from "path";
 
 export function findUnprocessedSessions(rawDir: string): string[] {
   if (!existsSync(rawDir)) return [];
   return readdirSync(rawDir).filter((entry) => {
-    const entryPath = join(rawDir, entry);
-    if (!statSync(entryPath).isDirectory()) return false;
-    return !existsSync(join(entryPath, ".completed"));
+    try {
+      const entryPath = join(rawDir, entry);
+      if (!statSync(entryPath).isDirectory()) return false;
+      return !existsSync(join(entryPath, ".completed"));
+    } catch {
+      return false;
+    }
   });
 }
 
@@ -50,5 +55,6 @@ export function mergeReviewsIntoDaily(reviewPaths: string[], dailyPath: string):
     ? existing.trimEnd() + "\n\n" + reviewContents.join("\n\n") + "\n"
     : reviewContents.join("\n\n") + "\n";
 
+  mkdirSync(dirname(dailyPath), { recursive: true });
   writeFileSync(dailyPath, merged, "utf-8");
 }

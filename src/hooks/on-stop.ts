@@ -1,3 +1,5 @@
+import { fileURLToPath } from "url";
+import { resolve } from "path";
 import { loadConfig } from "../core/config.js";
 import { parseHookInput, appendRawLog } from "../core/raw-logger.js";
 import { getRawDir } from "../core/vault.js";
@@ -19,8 +21,7 @@ export function handleStopHook(stdinData: string): void {
 }
 
 // Main execution: read stdin and run
-const scriptUrl = import.meta.url;
-const isMainModule = process.argv[1] && scriptUrl.endsWith(process.argv[1].replace(/\\/g, "/"));
+const isMainModule = process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1]);
 
 if (isMainModule) {
   let data = "";
