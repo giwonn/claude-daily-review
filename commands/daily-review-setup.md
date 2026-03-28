@@ -35,11 +35,7 @@ Ask the user:
 
 Run via Bash:
 ```bash
-node --input-type=module -e "
-import { requestDeviceCode } from '${CLAUDE_PLUGIN_ROOT}/lib/github-auth.mjs';
-const r = await requestDeviceCode();
-console.log(JSON.stringify(r));
-"
+node "${CLAUDE_PLUGIN_ROOT}/lib/request-device-code.mjs"
 ```
 
 Show the user:
@@ -47,16 +43,12 @@ Show the user:
 > - URL: https://github.com/login/device
 > - 코드: `{user_code}`
 
-Then poll for the token:
+Then poll for the token (pass the full device code response as JSON argument):
 ```bash
-node --input-type=module -e "
-import { pollForToken } from '${CLAUDE_PLUGIN_ROOT}/lib/github-auth.mjs';
-const token = await pollForToken({ device_code: '{device_code}', interval: {interval}, user_code: '', verification_uri: '', expires_in: 900 });
-console.log(token);
-"
+node "${CLAUDE_PLUGIN_ROOT}/lib/poll-token.mjs" '{"device_code":"{device_code}","interval":{interval},"user_code":"{user_code}","verification_uri":"https://github.com/login/device","expires_in":900}'
 ```
 
-Wait for the user to complete authorization. Store the returned `access_token`.
+Wait for the user to complete authorization. Store the returned token string.
 
 **2b. Select or create a repository:**
 
@@ -154,19 +146,7 @@ The config format is:
 
 **If local storage:** Create the vault directories by running via Bash:
 ```bash
-node --input-type=module -e "
-import fs from 'fs';
-import path from 'path';
-const config = JSON.parse(fs.readFileSync('${CLAUDE_PLUGIN_DATA}/config.json', 'utf-8'));
-const base = config.storage.local.basePath;
-const dirs = ['daily', 'projects', 'uncategorized', '.raw', '.reviews'];
-if (config.periods.weekly) dirs.push('weekly');
-if (config.periods.monthly) dirs.push('monthly');
-if (config.periods.quarterly) dirs.push('quarterly');
-if (config.periods.yearly) dirs.push('yearly');
-dirs.forEach(d => fs.mkdirSync(path.join(base, d), { recursive: true }));
-console.log('Directories created at: ' + base);
-"
+node "${CLAUDE_PLUGIN_ROOT}/lib/create-dirs.mjs"
 ```
 
 **If GitHub storage:** Skip directory creation. Directories are created implicitly when files are written to the GitHub repository.
