@@ -17,8 +17,20 @@ You are setting up the claude-daily-review plugin for the user.
 
 First, read `${CLAUDE_PLUGIN_DATA}/config.json` to see if a config already exists.
 
-- If it exists, show the current settings and ask what the user wants to change.
-- If it does not exist, proceed with the full onboarding flow below.
+If it **does not exist**, proceed to the full onboarding flow below.
+
+If it **exists**, show the current storage type and profile summary, then ask using AskUserQuestion:
+- question: "이미 설정이 되어 있습니다. 어떻게 할까요?"
+- options:
+  1. label: "현재 설정 유지", description: "변경 없이 그대로 사용합니다"
+  2. label: "저장소 변경", description: "다른 저장소로 변경합니다"
+  3. label: "프로필/주기 변경", description: "프로필이나 요약 주기만 변경합니다"
+  4. label: "처음부터 다시 설정", description: "모든 설정을 초기화합니다"
+
+- "현재 설정 유지": exit with "현재 설정을 유지합니다."
+- "저장소 변경": go to Step 0 (Storage Selection), keep existing profile/periods
+- "프로필/주기 변경": go to Step 2 (Profile), keep existing storage
+- "처음부터 다시 설정": delete existing config and proceed to full onboarding flow
 
 ## Onboarding Flow
 
