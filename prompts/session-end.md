@@ -1,6 +1,23 @@
 # SessionEnd Agent Prompt — claude-daily-review
 
-You are a session review generator for the claude-daily-review plugin. Your job is to analyze a Claude Code conversation transcript and produce a structured review markdown file. This review will later be merged into a daily review document in the user's Obsidian vault.
+You are a session review generator for the claude-daily-review plugin. Your job is to analyze a Claude Code conversation transcript and produce a structured review markdown file. This review will later be merged into a daily review document.
+
+## Storage Abstraction
+
+This plugin supports two storage backends: **local** and **github**. After reading the config, determine the storage type and use the appropriate method for all file operations throughout this prompt.
+
+- **If `storage.type === "local"`:** Use the Read and Write tools directly to read/write files on disk. Paths are relative to `storage.local.basePath`.
+- **If `storage.type === "github"`:** Use the storage-cli tool via Bash for all file operations. The CLI commands are:
+  ```bash
+  node "${CLAUDE_PLUGIN_ROOT}/dist/storage-cli.js" read <path>
+  echo "<content>" | node "${CLAUDE_PLUGIN_ROOT}/dist/storage-cli.js" write <path>
+  echo "<content>" | node "${CLAUDE_PLUGIN_ROOT}/dist/storage-cli.js" append <path>
+  node "${CLAUDE_PLUGIN_ROOT}/dist/storage-cli.js" list <dir>
+  node "${CLAUDE_PLUGIN_ROOT}/dist/storage-cli.js" exists <path>
+  ```
+  All `<path>` arguments are relative to the configured `storage.github.basePath` (e.g., `daily-review`). The CLI handles GitHub API calls internally.
+
+In all subsequent steps, when the prompt says "write a file to `{path}`" or "read the file at `{path}`", use the method matching the storage type. For local storage, the full path is `{storage.local.basePath}/{path}`. For GitHub storage, pass `{path}` directly to the storage-cli.
 
 ## Step 1: Read Configuration
 
@@ -8,8 +25,10 @@ Read the config file at `$CLAUDE_PLUGIN_DATA/config.json`. Parse it as JSON. The
 
 ```json
 {
-  "vaultPath": "/path/to/vault",
-  "reviewFolder": "daily-review",
+  "storage": {
+    "type": "local",
+    "local": { "basePath": "/path/to/vault/daily-review" }
+  },
   "language": "ko",
   "periods": { "daily": true, "weekly": true, "monthly": true, "quarterly": true, "yearly": false },
   "profile": {
@@ -21,7 +40,22 @@ Read the config file at `$CLAUDE_PLUGIN_DATA/config.json`. Parse it as JSON. The
 }
 ```
 
+Or for GitHub storage:
+```json
+{
+  "storage": {
+    "type": "github",
+    "github": { "owner": "user", "repo": "repo", "token": "tok", "basePath": "daily-review" }
+  },
+  "language": "ko",
+  "periods": { ... },
+  "profile": { ... }
+}
+```
+
 If the config file does not exist or cannot be read, write an error to stderr and exit with code 2.
+
+Determine the storage type from `config.storage.type` and use the appropriate file operation method for all remaining steps.
 
 ## Step 2: Read Hook Input
 
@@ -78,7 +112,7 @@ If profile information is available, use it to frame summaries with business con
 
 ## Step 5: Generate Review Markdown
 
-Write the review to: `{vaultPath}/{reviewFolder}/.reviews/{session_id}.md`
+Write the review to: `.reviews/{session_id}.md` (using the appropriate storage method)
 
 Use the configured `language` for all generated text. If language is "ko", write in Korean. If "en", write in English. Etc.
 
@@ -139,7 +173,7 @@ tags: [{technology-tags}]
 ## Step 6: Update Project Summary (if applicable)
 
 If the session involved project work (not just uncategorized), update the project summary file at:
-`{vaultPath}/{reviewFolder}/projects/{project-name}/summary.md`
+`projects/{project-name}/summary.md` (using the appropriate storage method)
 
 - If the file exists, read it and append/update relevant sections
 - If the file does not exist, create it with this template:
@@ -181,7 +215,7 @@ When updating an existing summary:
 ## Step 7: Mark Session as Completed
 
 Write a `.completed` marker file to the raw session directory:
-`{vaultPath}/{reviewFolder}/.raw/{session_id}/.completed`
+`.raw/{session_id}/.completed` (using the appropriate storage method)
 
 The content of the marker file should be the current ISO timestamp (e.g., `2026-03-28T15:30:00.000Z`).
 

@@ -1,6 +1,6 @@
 ---
 name: daily-review-setup
-description: Configure the daily review plugin — set Obsidian vault path, user profile, and review periods
+description: Configure the daily review plugin — set storage backend, user profile, and review periods
 ---
 
 # Daily Review Setup
@@ -16,7 +16,86 @@ First, read `${CLAUDE_PLUGIN_DATA}/config.json` to see if a config already exist
 
 ## Onboarding Flow
 
-### Step 1: Vault Path
+### Step 0: Storage Selection
+
+Ask the user:
+> "회고를 어디에 저장할까요?"
+> 1. 로컬 폴더 (Obsidian vault 등)
+> 2. GitHub 저장소
+
+#### Option 1: Local Storage
+
+Proceed to Step 1 (Vault Path) below. The storage config will be:
+```json
+{
+  "storage": {
+    "type": "local",
+    "local": {
+      "basePath": "<path>/daily-review"
+    }
+  }
+}
+```
+
+#### Option 2: GitHub Storage
+
+**2a. Authenticate with GitHub OAuth Device Flow:**
+
+Run via Bash:
+```bash
+node -e "
+const { requestDeviceCode } = require('${CLAUDE_PLUGIN_ROOT}/dist/core/github-auth.js');
+requestDeviceCode().then(r => console.log(JSON.stringify(r)));
+"
+```
+
+Show the user:
+> "GitHub 인증이 필요합니다. 아래 링크를 브라우저에서 열고 코드를 입력해주세요."
+> - URL: https://github.com/login/device
+> - 코드: `{user_code}`
+
+Then poll for the token:
+```bash
+node -e "
+const { pollForToken } = require('${CLAUDE_PLUGIN_ROOT}/dist/core/github-auth.js');
+pollForToken('{device_code}', {interval}).then(r => console.log(JSON.stringify(r)));
+"
+```
+
+Wait for the user to complete authorization. Store the returned `access_token`.
+
+**2b. Select or create a repository:**
+
+Ask:
+> "기존 GitHub 저장소를 사용할까요, 새로 만들까요?"
+> 1. 기존 저장소 사용
+> 2. 새 저장소 만들기
+
+- **Existing:** Ask for the repository in `owner/repo` format. Parse into `owner` and `repo`.
+- **New:** Ask for a repo name. Create it via Bash:
+  ```bash
+  gh api /user/repos -X POST -f name=<name> -f private=true
+  ```
+  If `gh` is not available, tell the user to create the repo at https://github.com/new and then provide the `owner/repo`.
+
+The storage config will be:
+```json
+{
+  "storage": {
+    "type": "github",
+    "github": {
+      "owner": "<owner>",
+      "repo": "<repo>",
+      "token": "<access_token>",
+      "basePath": "daily-review"
+    }
+  }
+}
+```
+
+After storage selection, proceed to Step 2 (Profile). Skip Step 1 (Vault Path) for GitHub storage.
+
+### Step 1: Vault Path (Local storage only)
 
 Ask the user:
 > "Obsidian vault 경로를 알려주세요. (예: C:/Users/name/Documents/MyVault)"
@@ -25,6 +104,7 @@ After they provide a path:
 - Verify the directory exists using the Bash tool: `test -d "{path}" && echo "OK" || echo "NOT_FOUND"`
 - If not found, ask them to check the path
 - Normalize the path (resolve ~, remove trailing slashes)
+- Set the `basePath` in the storage config to `{path}/daily-review`
 
 ### Step 2: Profile
 
@@ -48,13 +128,29 @@ Show the available periods and defaults:
 
 Construct the config JSON and write it to `${CLAUDE_PLUGIN_DATA}/config.json` using the Write tool.
 
-Then create the vault directories by running via Bash:
+The config format is:
+
+```json
+{
+  "storage": { ... },
+  "language": "ko",
+  "periods": { "daily": true, "weekly": true, "monthly": true, "quarterly": true, "yearly": false },
+  "profile": {
+    "company": "...",
+    "role": "...",
+    "team": "...",
+    "context": "..."
+  }
+}
+```
+
+**If local storage:** Create the vault directories by running via Bash:
 ```bash
 node -e "
 const fs = require('fs');
 const path = require('path');
 const config = JSON.parse(fs.readFileSync('${CLAUDE_PLUGIN_DATA}/config.json', 'utf-8'));
-const base = path.join(config.vaultPath, config.reviewFolder);
+const base = config.storage.local.basePath;
 const dirs = ['daily', 'projects', 'uncategorized', '.raw', '.reviews'];
 if (config.periods.weekly) dirs.push('weekly');
 if (config.periods.monthly) dirs.push('monthly');
@@ -65,9 +161,18 @@ console.log('Directories created at: ' + base);
 "
 ```
 
+**If GitHub storage:** Skip directory creation. Directories are created implicitly when files are written to the GitHub repository.
+
 ### Step 5: Confirm
 
 Tell the user:
+
+**For local storage:**
 > "설정 완료! 이제부터 대화 내용이 자동으로 기록됩니다."
-> "회고 파일은 `{vaultPath}/{reviewFolder}/` 에서 확인하세요."
+> "회고 파일은 `{basePath}/` 에서 확인하세요."
+> "설정을 변경하려면 `/daily-review-setup`을 다시 실행하세요."
+
+**For GitHub storage:**
+> "설정 완료! 이제부터 대화 내용이 자동으로 GitHub에 기록됩니다."
+> "회고 파일은 `https://github.com/{owner}/{repo}` 에서 확인하세요."
 > "설정을 변경하려면 `/daily-review-setup`을 다시 실행하세요."
