@@ -1,10 +1,13 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ["src/hooks/on-stop.ts"],
+  entry: {
+    "on-stop": "src/hooks/on-stop.ts",
+    "storage-cli": "src/cli/storage-cli.ts",
+  },
   format: ["esm"],
   target: "node20",
-  outDir: "dist/hooks",
+  outDir: "dist",
   clean: true,
   sourcemap: true,
   splitting: false,

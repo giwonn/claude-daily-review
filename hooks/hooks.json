@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/hooks/on-stop.js\"",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/on-stop.js\"",
             "async": true,
             "timeout": 10
           }
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "agent",
-            "prompt": "Follow the instructions in the file at ${CLAUDE_PLUGIN_ROOT}/prompts/session-end.md exactly. The CLAUDE_PLUGIN_DATA directory is: ${CLAUDE_PLUGIN_DATA}",
+            "prompt": "Follow the instructions in the file at ${CLAUDE_PLUGIN_ROOT}/prompts/session-end.md exactly. The CLAUDE_PLUGIN_DATA directory is: ${CLAUDE_PLUGIN_DATA}. The plugin root is: ${CLAUDE_PLUGIN_ROOT}",
             "timeout": 120
           }
         ]
@@ -28,7 +28,7 @@
         "hooks": [
           {
             "type": "agent",
-            "prompt": "Follow the instructions in the file at ${CLAUDE_PLUGIN_ROOT}/prompts/session-start.md exactly. The CLAUDE_PLUGIN_DATA directory is: ${CLAUDE_PLUGIN_DATA}",
+            "prompt": "Follow the instructions in the file at ${CLAUDE_PLUGIN_ROOT}/prompts/session-start.md exactly. The CLAUDE_PLUGIN_DATA directory is: ${CLAUDE_PLUGIN_DATA}. The plugin root is: ${CLAUDE_PLUGIN_ROOT}",
             "timeout": 180
           }
         ]
