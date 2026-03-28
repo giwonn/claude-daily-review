@@ -1,6 +1,6 @@
 {
   "name": "claude-daily-review",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Claude Code plugin that auto-captures conversations for daily review and career documentation",
   "type": "module",
   "main": "dist/hooks/on-stop.js",
@@ -10,6 +10,10 @@
     "test:watch": "vitest"
   },
   "keywords": ["claude-code", "plugin", "daily-review", "obsidian"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/giwonn/claude-daily-review"
+  },
   "license": "MIT",
   "files": [
     "dist",
