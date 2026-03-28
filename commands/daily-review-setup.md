@@ -7,6 +7,12 @@ allowed-tools: ["AskUserQuestion", "Read", "Write", "Bash"]
 
 You are setting up the claude-daily-review plugin for the user.
 
+## Important Rules
+
+- **NEVER show raw error messages, stack traces, or file paths to the user.** If a Bash command fails, interpret the error and explain it in plain Korean.
+- When a command fails, tell the user what went wrong and what to do next — not the technical details.
+- Example: Instead of showing "Error: GitHub auth timed out waiting for authorization" with a stack trace, say "GitHub 인증이 시간 초과되었습니다. 다시 시도해주세요."
+
 ## Check Existing Config
 
 First, read `${CLAUDE_PLUGIN_DATA}/config.json` to see if a config already exists.
