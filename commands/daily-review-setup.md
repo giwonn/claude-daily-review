@@ -1,6 +1,6 @@
 ---
-name: daily-review-setup
 description: Configure the daily review plugin — set storage backend, user profile, and review periods
+allowed-tools: ["AskUserQuestion", "Read", "Write", "Bash"]
 ---
 
 # Daily Review Setup
