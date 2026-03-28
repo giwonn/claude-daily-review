@@ -4,6 +4,8 @@ import { loadConfig, createStorageAdapter } from '../lib/config.mjs';
 import { parseHookInput, appendRawLog } from '../lib/raw-logger.mjs';
 import { getRawDir } from '../lib/vault.mjs';
 import { formatDate } from '../lib/periods.mjs';
+import { writeFileSync, mkdirSync } from 'fs';
+import { dirname, join } from 'path';
 
 async function main() {
   try {
@@ -17,8 +19,18 @@ async function main() {
     const sessionDir = getRawDir(input.session_id);
     const date = formatDate(new Date());
     await appendRawLog(storage, sessionDir, date, input);
-  } catch {
-    // async hook — fail silently
+  } catch (err) {
+    // Log errors for debugging
+    try {
+      const logDir = process.env.CLAUDE_PLUGIN_DATA;
+      if (logDir) {
+        const logPath = join(logDir, 'error.log');
+        mkdirSync(dirname(logPath), { recursive: true });
+        writeFileSync(logPath, `${new Date().toISOString()} ${err.message}\n${err.stack}\n`, { flag: 'a' });
+      }
+    } catch {
+      // truly silent
+    }
   }
 }
 main();
