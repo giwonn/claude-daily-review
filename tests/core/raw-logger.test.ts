@@ -1,7 +1,9 @@
+// tests/core/raw-logger.test.ts
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, rmSync, readFileSync, existsSync } from "fs";
+import { mkdtempSync, rmSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
+import { LocalStorageAdapter } from "../../src/core/local-storage.js";
 import {
   parseHookInput,
   appendRawLog,
@@ -10,9 +12,11 @@ import {
 
 describe("raw-logger", () => {
   let tempDir: string;
+  let storage: LocalStorageAdapter;
 
   beforeEach(() => {
     tempDir = mkdtempSync(join(tmpdir(), "cdr-raw-"));
+    storage = new LocalStorageAdapter(tempDir);
   });
 
   afterEach(() => {
@@ -45,8 +49,7 @@ describe("raw-logger", () => {
   });
 
   describe("appendRawLog", () => {
-    it("creates session directory and appends log entry", () => {
-      const sessionDir = join(tempDir, "sess-1");
+    it("creates session directory and appends log entry", async () => {
       const entry: HookInput = {
         session_id: "sess-1",
         transcript_path: "/tmp/t.jsonl",
@@ -54,11 +57,11 @@ describe("raw-logger", () => {
         hook_event_name: "Stop",
       };
 
-      appendRawLog(sessionDir, "2026-03-28", entry);
+      await appendRawLog(storage, ".raw/sess-1", "2026-03-28", entry);
 
-      const logPath = join(sessionDir, "2026-03-28.jsonl");
-      expect(existsSync(logPath)).toBe(true);
-      const lines = readFileSync(logPath, "utf-8").trim().split("\n");
+      const content = await storage.read(".raw/sess-1/2026-03-28.jsonl");
+      expect(content).not.toBeNull();
+      const lines = content!.trim().split("\n");
       expect(lines).toHaveLength(1);
       const parsed = JSON.parse(lines[0]);
       expect(parsed.session_id).toBe("sess-1");
@@ -66,8 +69,7 @@ describe("raw-logger", () => {
       expect(typeof parsed.timestamp).toBe("string");
     });
 
-    it("appends multiple entries to same file", () => {
-      const sessionDir = join(tempDir, "sess-2");
+    it("appends multiple entries to same file", async () => {
       const entry: HookInput = {
         session_id: "sess-2",
         transcript_path: "/tmp/t.jsonl",
@@ -75,16 +77,15 @@ describe("raw-logger", () => {
         hook_event_name: "Stop",
       };
 
-      appendRawLog(sessionDir, "2026-03-28", entry);
-      appendRawLog(sessionDir, "2026-03-28", entry);
+      await appendRawLog(storage, ".raw/sess-2", "2026-03-28", entry);
+      await appendRawLog(storage, ".raw/sess-2", "2026-03-28", entry);
 
-      const logPath = join(sessionDir, "2026-03-28.jsonl");
-      const lines = readFileSync(logPath, "utf-8").trim().split("\n");
+      const content = await storage.read(".raw/sess-2/2026-03-28.jsonl");
+      const lines = content!.trim().split("\n");
       expect(lines).toHaveLength(2);
     });
 
-    it("creates separate files for different dates", () => {
-      const sessionDir = join(tempDir, "sess-3");
+    it("creates separate files for different dates", async () => {
       const entry: HookInput = {
         session_id: "sess-3",
         transcript_path: "/tmp/t.jsonl",
@@ -92,15 +93,14 @@ describe("raw-logger", () => {
         hook_event_name: "Stop",
       };
 
-      appendRawLog(sessionDir, "2026-03-28", entry);
-      appendRawLog(sessionDir, "2026-03-29", entry);
+      await appendRawLog(storage, ".raw/sess-3", "2026-03-28", entry);
+      await appendRawLog(storage, ".raw/sess-3", "2026-03-29", entry);
 
-      expect(existsSync(join(sessionDir, "2026-03-28.jsonl"))).toBe(true);
-      expect(existsSync(join(sessionDir, "2026-03-29.jsonl"))).toBe(true);
+      expect(await storage.exists(".raw/sess-3/2026-03-28.jsonl")).toBe(true);
+      expect(await storage.exists(".raw/sess-3/2026-03-29.jsonl")).toBe(true);
     });
 
-    it("stores timestamp in each entry", () => {
-      const sessionDir = join(tempDir, "sess-4");
+    it("stores timestamp in each entry", async () => {
       const entry: HookInput = {
         session_id: "sess-4",
         transcript_path: "/tmp/t.jsonl",
@@ -108,10 +108,10 @@ describe("raw-logger", () => {
         hook_event_name: "Stop",
       };
 
-      appendRawLog(sessionDir, "2026-03-28", entry);
+      await appendRawLog(storage, ".raw/sess-4", "2026-03-28", entry);
 
-      const logPath = join(sessionDir, "2026-03-28.jsonl");
-      const parsed = JSON.parse(readFileSync(logPath, "utf-8").trim());
+      const content = await storage.read(".raw/sess-4/2026-03-28.jsonl");
+      const parsed = JSON.parse(content!.trim());
       expect(parsed.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     });
   });

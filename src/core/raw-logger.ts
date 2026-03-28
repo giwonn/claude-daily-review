@@ -1,5 +1,5 @@
-import { appendFileSync, mkdirSync } from "fs";
-import { join } from "path";
+// src/core/raw-logger.ts
+import type { StorageAdapter } from "./storage.js";
 
 export interface HookInput {
   session_id: string;
@@ -20,12 +20,12 @@ export function parseHookInput(raw: string): HookInput {
   return parsed as HookInput;
 }
 
-export function appendRawLog(sessionDir: string, date: string, entry: HookInput): void {
-  mkdirSync(sessionDir, { recursive: true });
-  const logPath = join(sessionDir, `${date}.jsonl`);
+export async function appendRawLog(storage: StorageAdapter, sessionDir: string, date: string, entry: HookInput): Promise<void> {
+  await storage.mkdir(sessionDir);
+  const logPath = `${sessionDir}/${date}.jsonl`;
   const record = {
     ...entry,
     timestamp: new Date().toISOString(),
   };
-  appendFileSync(logPath, JSON.stringify(record) + "\n", "utf-8");
+  await storage.append(logPath, JSON.stringify(record) + "\n");
 }
