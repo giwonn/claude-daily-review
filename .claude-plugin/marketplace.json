@@ -1,0 +1,26 @@
+{
+  "name": "giwonn-plugins",
+  "owner": {
+    "name": "giwonn"
+  },
+  "metadata": {
+    "description": "giwonn's Claude Code plugins"
+  },
+  "plugins": [
+    {
+      "name": "claude-daily-review",
+      "source": {
+        "source": "npm",
+        "package": "@giwonn/claude-daily-review"
+      },
+      "description": "Auto-capture conversations for daily review and career documentation",
+      "author": {
+        "name": "giwonn"
+      },
+      "homepage": "https://github.com/giwonn/claude-daily-review",
+      "repository": "https://github.com/giwonn/claude-daily-review",
+      "license": "MIT",
+      "tags": ["daily-review", "obsidian", "github", "career"]
+    }
+  ]
+}
