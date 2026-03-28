@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/on-stop.js\"",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/on-stop.mjs\"",
             "async": true,
             "timeout": 10
           }
@@ -25,10 +25,11 @@
     ],
     "SessionStart": [
       {
+        "matcher": "startup",
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/on-session-start-check.js\"",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" session-start-check",
             "timeout": 5
           }
         ]

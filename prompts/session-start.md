@@ -9,11 +9,11 @@ This plugin supports two storage backends: **local** and **github**. After readi
 - **If `storage.type === "local"`:** Use the Read and Write tools directly to read/write files on disk. Paths are relative to `storage.local.basePath`.
 - **If `storage.type === "github"`:** Use the storage-cli tool via Bash for all file operations. The CLI commands are:
   ```bash
-  node "${CLAUDE_PLUGIN_ROOT}/dist/storage-cli.js" read <path>
-  echo "<content>" | node "${CLAUDE_PLUGIN_ROOT}/dist/storage-cli.js" write <path>
-  echo "<content>" | node "${CLAUDE_PLUGIN_ROOT}/dist/storage-cli.js" append <path>
-  node "${CLAUDE_PLUGIN_ROOT}/dist/storage-cli.js" list <dir>
-  node "${CLAUDE_PLUGIN_ROOT}/dist/storage-cli.js" exists <path>
+  node "${CLAUDE_PLUGIN_ROOT}/lib/storage-cli.mjs" read <path>
+  echo "<content>" | node "${CLAUDE_PLUGIN_ROOT}/lib/storage-cli.mjs" write <path>
+  echo "<content>" | node "${CLAUDE_PLUGIN_ROOT}/lib/storage-cli.mjs" append <path>
+  node "${CLAUDE_PLUGIN_ROOT}/lib/storage-cli.mjs" list <dir>
+  node "${CLAUDE_PLUGIN_ROOT}/lib/storage-cli.mjs" exists <path>
   ```
   All `<path>` arguments are relative to the configured `storage.github.basePath` (e.g., `daily-review`). The CLI handles GitHub API calls internally.
 
