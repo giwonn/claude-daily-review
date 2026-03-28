@@ -1,5 +1,6 @@
+// tests/hooks/on-stop.test.ts
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, rmSync, existsSync, writeFileSync, readdirSync } from "fs";
+import { mkdtempSync, rmSync, writeFileSync, existsSync, readdirSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
 import { handleStopHook } from "../../src/hooks/on-stop.js";
@@ -15,8 +16,7 @@ describe("on-stop hook", () => {
     process.env.CLAUDE_PLUGIN_DATA = tempPluginData;
 
     const config = {
-      vaultPath: tempVault,
-      reviewFolder: "daily-review",
+      storage: { type: "local", local: { basePath: join(tempVault, "daily-review") } },
       language: "ko",
       periods: { daily: true, weekly: true, monthly: true, quarterly: true, yearly: false },
       profile: { company: "", role: "", team: "", context: "" },
@@ -30,7 +30,7 @@ describe("on-stop hook", () => {
     process.env = { ...originalEnv };
   });
 
-  it("appends raw log for valid input", () => {
+  it("appends raw log for valid input", async () => {
     const input = JSON.stringify({
       session_id: "test-sess",
       transcript_path: "/tmp/t.jsonl",
@@ -38,16 +38,15 @@ describe("on-stop hook", () => {
       hook_event_name: "Stop",
     });
 
-    handleStopHook(input);
+    await handleStopHook(input);
 
     const rawDir = join(tempVault, "daily-review", ".raw", "test-sess");
     expect(existsSync(rawDir)).toBe(true);
-
     const files = readdirSync(rawDir);
     expect(files.some((f: string) => f.endsWith(".jsonl"))).toBe(true);
   });
 
-  it("exits silently when config is missing", () => {
+  it("exits silently when config is missing", async () => {
     rmSync(join(tempPluginData, "config.json"));
     const input = JSON.stringify({
       session_id: "test-sess",
@@ -55,11 +54,10 @@ describe("on-stop hook", () => {
       cwd: "/projects/my-app",
       hook_event_name: "Stop",
     });
-
-    expect(() => handleStopHook(input)).not.toThrow();
+    await expect(handleStopHook(input)).resolves.not.toThrow();
   });
 
-  it("exits silently on invalid JSON input", () => {
-    expect(() => handleStopHook("not-json")).not.toThrow();
+  it("exits silently on invalid JSON input", async () => {
+    await expect(handleStopHook("not-json")).resolves.not.toThrow();
   });
 });
