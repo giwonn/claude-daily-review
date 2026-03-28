@@ -13,7 +13,7 @@
       "source": {
         "source": "url",
         "url": "https://github.com/giwonn/claude-daily-review.git",
-        "sha": "8bba99d"
+        "sha": "8bba99dd6c2aab0ca225c8a7d6b499faadd82f5d"
       },
       "description": "Auto-capture conversations for daily review and career documentation",
       "version": "0.2.4",
