@@ -36,21 +36,27 @@ function loadConfig() {
   }
   return raw;
 }
-function saveConfig(config) {
+function saveConfig(config2) {
   const configPath = getConfigPath();
   mkdirSync(dirname(configPath), { recursive: true });
-  writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8");
+  writeFileSync(configPath, JSON.stringify(config2, null, 2), "utf-8");
 }
 
 // src/hooks/on-session-start-check.ts
+var config = null;
 try {
-  const config = loadConfig();
-  if (!config) {
-    process.stderr.write("daily-review \uD50C\uB7EC\uADF8\uC778\uC774 \uC544\uC9C1 \uC124\uC815\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4. /daily-review-setup \uC744 \uC2E4\uD589\uD574\uC8FC\uC138\uC694.");
-    process.exit(2);
-  }
+  config = loadConfig();
 } catch {
-  process.stderr.write("daily-review \uD50C\uB7EC\uADF8\uC778\uC774 \uC544\uC9C1 \uC124\uC815\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4. /daily-review-setup \uC744 \uC2E4\uD589\uD574\uC8FC\uC138\uC694.");
-  process.exit(2);
 }
+if (!config) {
+  const message = "daily-review \uD50C\uB7EC\uADF8\uC778\uC774 \uC544\uC9C1 \uC124\uC815\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4. /daily-review-setup \uC744 \uC2E4\uD589\uD574\uC8FC\uC138\uC694.";
+  const escaped = message.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n");
+  process.stdout.write(JSON.stringify({
+    hookSpecificOutput: {
+      hookEventName: "SessionStart",
+      additionalContext: escaped
+    }
+  }));
+}
+process.exit(0);
 //# sourceMappingURL=on-session-start-check.js.map
