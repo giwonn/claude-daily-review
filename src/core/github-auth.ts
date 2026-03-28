@@ -1,4 +1,4 @@
-const GITHUB_CLIENT_ID = "PLACEHOLDER_CLIENT_ID"; // Replace after OAuth App registration
+const GITHUB_CLIENT_ID = "Ov23lijFU2NkxD93Q2f2";
 
 export interface DeviceCodeResponse {
   device_code: string;
