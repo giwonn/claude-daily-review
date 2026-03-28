@@ -128,16 +128,16 @@ describe("config", () => {
   });
 
   describe("createStorageAdapter", () => {
-    it("returns LocalStorageAdapter for local config", () => {
+    it("returns LocalStorageAdapter for local config", async () => {
       const config = createDefaultLocalConfig("/my/vault");
-      const adapter = createStorageAdapter(config);
+      const adapter = await createStorageAdapter(config);
       expect(adapter).toBeInstanceOf(LocalStorageAdapter);
     });
 
-    it("throws for unknown storage type", () => {
+    it("throws for unknown storage type", async () => {
       const config = createDefaultLocalConfig("/my/vault");
       (config.storage as any).type = "unknown";
-      expect(() => createStorageAdapter(config)).toThrow("Unknown storage type");
+      await expect(createStorageAdapter(config)).rejects.toThrow("Unknown storage type");
     });
   });
 });

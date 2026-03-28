@@ -149,12 +149,14 @@ export function createDefaultGitHubConfig(owner: string, repo: string, token: st
   };
 }
 
-export function createStorageAdapter(config: Config): StorageAdapter {
+export async function createStorageAdapter(config: Config): Promise<StorageAdapter> {
   if (config.storage.type === "local") {
     return new LocalStorageAdapter(config.storage.local!.basePath);
   }
   if (config.storage.type === "github") {
-    throw new Error("GitHub storage not yet implemented");
+    const { GitHubStorageAdapter } = await import("./github-storage.js");
+    const g = config.storage.github!;
+    return new GitHubStorageAdapter(g.owner, g.repo, g.token, g.basePath);
   }
   throw new Error(`Unknown storage type: ${(config.storage as any).type}`);
 }
