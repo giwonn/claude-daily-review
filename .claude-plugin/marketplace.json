@@ -1,4 +1,5 @@
 {
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "giwonn-plugins",
   "owner": {
     "name": "giwonn"
@@ -10,10 +11,12 @@
     {
       "name": "claude-daily-review",
       "source": {
-        "source": "npm",
-        "package": "@giwonn/claude-daily-review"
+        "source": "url",
+        "url": "https://github.com/giwonn/claude-daily-review.git",
+        "sha": "7c8dcd2c699a2e10e3a09d1d49c3c36e8e013eb5"
       },
       "description": "Auto-capture conversations for daily review and career documentation",
+      "version": "0.2.4",
       "author": {
         "name": "giwonn"
       },
