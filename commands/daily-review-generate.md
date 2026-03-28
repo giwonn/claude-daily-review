@@ -128,7 +128,17 @@ For each year in `needs.yearly`:
 
 Write to `yearly/{year}.md`.
 
-## Step 7: Report
+## Step 7: Update last-generated timestamp
+
+The JSON from Step 1 includes `newTimestamp`. Save it locally:
+
+```bash
+echo '{"timestamp":"NEW_TIMESTAMP_VALUE"}' > "${CLAUDE_PLUGIN_DATA}/last-generated.json"
+```
+
+Replace `NEW_TIMESTAMP_VALUE` with the `newTimestamp` value from the collected data.
+
+## Step 8: Report
 
 Tell the user:
 > "회고 생성 완료!"
