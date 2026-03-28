@@ -29,9 +29,10 @@ Ask the user:
 
 Run via Bash:
 ```bash
-node -e "
-const { requestDeviceCode } = await import('${CLAUDE_PLUGIN_ROOT}/lib/github-auth.mjs');
-requestDeviceCode().then(r => console.log(JSON.stringify(r)));
+node --input-type=module -e "
+import { requestDeviceCode } from '${CLAUDE_PLUGIN_ROOT}/lib/github-auth.mjs';
+const r = await requestDeviceCode();
+console.log(JSON.stringify(r));
 "
 ```
 
@@ -42,9 +43,10 @@ Show the user:
 
 Then poll for the token:
 ```bash
-node -e "
-const { pollForToken } = await import('${CLAUDE_PLUGIN_ROOT}/lib/github-auth.mjs');
-pollForToken('{device_code}', {interval}).then(r => console.log(JSON.stringify(r)));
+node --input-type=module -e "
+import { pollForToken } from '${CLAUDE_PLUGIN_ROOT}/lib/github-auth.mjs';
+const token = await pollForToken({ device_code: '{device_code}', interval: {interval}, user_code: '', verification_uri: '', expires_in: 900 });
+console.log(token);
 "
 ```
 
@@ -146,9 +148,9 @@ The config format is:
 
 **If local storage:** Create the vault directories by running via Bash:
 ```bash
-node -e "
-const fs = require('fs');
-const path = require('path');
+node --input-type=module -e "
+import fs from 'fs';
+import path from 'path';
 const config = JSON.parse(fs.readFileSync('${CLAUDE_PLUGIN_DATA}/config.json', 'utf-8'));
 const base = config.storage.local.basePath;
 const dirs = ['daily', 'projects', 'uncategorized', '.raw', '.reviews'];
