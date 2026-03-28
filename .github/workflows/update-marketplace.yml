@@ -1,0 +1,28 @@
+name: Update Marketplace SHA
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  update-sha:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Update SHA in marketplace.json
+        run: |
+          SHA=$(git rev-parse HEAD)
+          sed -i "s/\"sha\": \"[a-f0-9]*\"/\"sha\": \"$SHA\"/" .claude-plugin/marketplace.json
+          cat .claude-plugin/marketplace.json
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .claude-plugin/marketplace.json
+          git diff --cached --quiet && echo "No changes" || (git commit -m "chore: update marketplace SHA [skip ci]" && git push)
