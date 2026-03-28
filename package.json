@@ -11,6 +11,13 @@
   },
   "keywords": ["claude-code", "plugin", "daily-review", "obsidian"],
   "license": "MIT",
+  "files": [
+    "dist",
+    "hooks",
+    "prompts",
+    "skills",
+    "README.md"
+  ],
   "devDependencies": {
     "typescript": "^5.4.0",
     "vitest": "^3.0.0",
