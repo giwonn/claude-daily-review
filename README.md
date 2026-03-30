@@ -13,14 +13,25 @@ Turn your daily AI-assisted development work into career documentation — on de
 - **Natural language targeting**: "yesterday's review", "Q1 summary", "my-app project March review"
 - **Structured reviews**: Work summaries, learnings, decisions, and Q&A organized by project
 - **Cascading summaries**: Daily → Weekly → Monthly → Quarterly → Yearly
+- **Git commit integration**: Automatically captures git commits from sessions and links them in reviews
+- **Secret redaction**: API keys, tokens, and passwords are automatically masked before storage
 - **Obsidian integration**: Direct markdown output with tags and links
 - **GitHub integration**: Store reviews in a GitHub repo with OAuth authentication
+- **Multi-machine sync**: GitHub storage shares config across machines automatically
 - **Crash recovery**: Missing raw logs auto-recovered from transcripts on session start
 
 ## Installation
 
+**From terminal:**
 ```bash
-claude plugin add claude-daily-review
+claude plugin marketplace add giwonn/claude-daily-review
+claude plugin install claude-daily-review@giwonn-plugins
+```
+
+**From Claude Code:**
+```
+/plugin marketplace add giwonn/claude-daily-review
+/plugin install claude-daily-review@giwonn-plugins
 ```
 
 ## Setup
@@ -39,7 +50,7 @@ This will ask for:
 ## How It Works
 
 ```
-Every response     →  Raw log saved automatically (async, non-blocking)
+Session end        →  Raw log + git commits saved automatically (async, non-blocking)
 Session start      →  Missing logs recovered from transcripts
 /generate          →  AI generates reviews from raw logs on demand
 ```
@@ -58,6 +69,13 @@ Use `/generate` with natural language to control what gets generated:
 ```
 
 When no arguments are given, it generates all reviews that haven't been created yet (incremental mode).
+
+### Git Commit Integration
+
+When you make git commits during a session, the plugin automatically:
+1. Extracts commit hashes, branches, and messages from the transcript
+2. Resolves remote URLs and GitHub account info
+3. Includes commit details in daily reviews with links to GitHub
 
 ## GitHub Storage
 
@@ -78,6 +96,8 @@ After authenticating, you can either:
 ### How It Works
 
 Files are read and written via the **GitHub Contents API**. Each review file is committed directly to the repository as a markdown file, using the same folder structure as local storage. No local git installation is required.
+
+Profile, language, and period settings are saved as `.config.json` in the repo, so other machines can restore them automatically after authentication.
 
 ## Vault Structure
 
@@ -138,7 +158,7 @@ Config is stored at `$CLAUDE_PLUGIN_DATA/config.json`.
       "owner": "your-github-username",
       "repo": "daily-review",
       "token": "<stored by OAuth flow>",
-      "basePath": "daily-review"
+      "basePath": ""
     }
   },
   "language": "ko",
