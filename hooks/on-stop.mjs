@@ -57,6 +57,13 @@ async function main() {
     const sessionDir = getRawDir(input.session_id);
     const date = formatDate(new Date());
     await appendRawLog(storage, sessionDir, date, input);
+
+    // Save transcript path for session recovery
+    if (input.transcript_path) {
+      const metaPath = `${sessionDir}/.meta.json`;
+      const meta = JSON.stringify({ transcript_path: input.transcript_path, session_id: input.session_id });
+      await storage.write(metaPath, meta);
+    }
   } catch (err) {
     try {
       const logDir = process.env.CLAUDE_PLUGIN_DATA;
