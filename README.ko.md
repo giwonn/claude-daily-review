@@ -1,5 +1,9 @@
 # claude-daily-review
 
+[![GitHub Release](https://img.shields.io/github/v/release/giwonn/claude-daily-review)](https://github.com/giwonn/claude-daily-review/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Claude Code Plugin](https://img.shields.io/badge/Claude_Code-Plugin-blueviolet)](https://github.com/giwonn/claude-daily-review)
+
 Claude Code 플러그인으로, 대화 내용을 자동으로 캡처하여 Obsidian vault 또는 GitHub 저장소에 구조화된 회고 마크다운 파일을 생성합니다.
 
 AI와 함께하는 일상 개발 업무를 경력 문서로 변환하세요 — 원할 때 바로.

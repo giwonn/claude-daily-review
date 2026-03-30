@@ -1,5 +1,9 @@
 # claude-daily-review
 
+[![GitHub Release](https://img.shields.io/github/v/release/giwonn/claude-daily-review)](https://github.com/giwonn/claude-daily-review/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Claude Code Plugin](https://img.shields.io/badge/Claude_Code-Plugin-blueviolet)](https://github.com/giwonn/claude-daily-review)
+
 [한국어](README.ko.md)
 
 Claude Code plugin that automatically captures your conversations and generates structured review markdown files in your Obsidian vault or GitHub repository.
