@@ -55,10 +55,12 @@ jobs:
         with:
           ref: master
 
-      - name: Update SHA in marketplace.json
+      - name: Update SHA and version in marketplace.json
         run: |
           SHA=$(git rev-parse HEAD)
+          VERSION=$(node -p "require('./package.json').version")
           sed -i "s/\"sha\": \"[a-f0-9]*\"/\"sha\": \"$SHA\"/" .claude-plugin/marketplace.json
+          sed -i "s/\"version\": \"[0-9.]*\"/\"version\": \"$VERSION\"/" .claude-plugin/marketplace.json
           cat .claude-plugin/marketplace.json
 
       - name: Commit and push
