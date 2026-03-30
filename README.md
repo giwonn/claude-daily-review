@@ -121,6 +121,9 @@ Config is stored at `$CLAUDE_PLUGIN_DATA/config.json`.
     "role": "Your Role",
     "team": "Your Team",
     "context": "What you do in one line"
+  },
+  "privacy": {
+    "redactSecrets": true
   }
 }
 ```
@@ -151,9 +154,41 @@ Config is stored at `$CLAUDE_PLUGIN_DATA/config.json`.
     "role": "Your Role",
     "team": "Your Team",
     "context": "What you do in one line"
+  },
+  "privacy": {
+    "redactSecrets": true
   }
 }
 ```
+
+## Security & Privacy
+
+### What Gets Collected
+
+This plugin automatically captures and stores **all conversations** with Claude Code:
+- Full user messages and AI responses
+- Working directory paths and project names
+- Git commit messages, branch names, and remote URLs
+
+### Corporate / Organizational Use
+
+When using this plugin for work, the following may be recorded:
+
+- Source code and business logic descriptions
+- Internal system/service names and architecture details
+- Colleague names, client information, and project specifics
+- Internal URLs, IP addresses, and infrastructure configurations
+
+**You are solely responsible for managing this information.**
+Please review your organization's security policies before use.
+
+### Automatic Secret Redaction
+
+Known secret patterns (API keys, tokens, passwords, etc.) are automatically redacted to `[REDACTED]` before storage. However, this is a best-effort mechanism and **does not guarantee complete protection of all sensitive data.**
+
+### GitHub Storage
+
+If storing reviews on GitHub, **always use a private repository.** Storing to a public repository exposes your conversations and reviews to the internet. Since secret redaction cannot cover all cases, keeping the repository private is the most fundamental security measure.
 
 ## License
 

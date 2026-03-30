@@ -30,11 +30,16 @@ export interface StorageConfig {
   github?: GitHubStorageConfig;
 }
 
+export interface PrivacyConfig {
+  redactSecrets: boolean;
+}
+
 export interface Config {
   storage: StorageConfig;
   language: string;
   periods: Periods;
   profile: Profile;
+  privacy?: PrivacyConfig;
 }
 
 export interface StorageAdapter {

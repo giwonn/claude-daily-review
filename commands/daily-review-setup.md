@@ -78,6 +78,26 @@ Ask using AskUserQuestion:
   If `gh` is not available, tell the user to create the repo at https://github.com/new and then provide the `owner/repo`.
 - **Existing:** Ask for the repository in `owner/repo` format. Parse into `owner` and `repo`.
 
+  After parsing owner/repo, check if the repository is public:
+  ```bash
+  MSYS_NO_PATHCONV=1 gh api "repos/{owner}/{repo}" --jq '.private'
+  ```
+  If the result is `false` (public repository), warn the user using AskUserQuestion:
+  - question: "⚠️ 이 저장소는 **public**입니다. 대화 내용과 회고 파일이 인터넷에 공개됩니다. private 저장소 사용을 강력히 권장합니다."
+  - options:
+    1. label: "private으로 변경 후 계속", description: "저장소를 비공개로 변경합니다"
+    2. label: "그대로 사용 (위험 인지)", description: "public 상태로 계속 진행합니다"
+    3. label: "다른 저장소 선택", description: "다른 저장소를 지정합니다"
+
+  - "private으로 변경 후 계속":
+    ```bash
+    MSYS_NO_PATHCONV=1 gh api "repos/{owner}/{repo}" -X PATCH -f private=true
+    ```
+    If successful: "저장소를 private으로 변경했습니다." and continue.
+    If failed: "권한이 없어 변경할 수 없습니다. 저장소 관리자에게 요청하세요." and ask again.
+  - "그대로 사용 (위험 인지)": continue with the public repo.
+  - "다른 저장소 선택": go back to 1b repo selection.
+
 **1c. Check for shared config in repo:**
 
 After repo is selected/created, **save a minimal config first** so `storage-cli.mjs` can connect to the repo:
