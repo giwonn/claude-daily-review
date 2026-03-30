@@ -107,7 +107,7 @@ The local config will be:
       "owner": "<owner>",
       "repo": "<repo>",
       "token": "<access_token>",
-      "basePath": "daily-review"
+      "basePath": ""
     }
   }
 }
@@ -202,7 +202,7 @@ For **local storage**, the config includes everything:
 For **GitHub storage**, the local config only has storage credentials:
 ```json
 {
-  "storage": { "type": "github", "github": { "owner": "...", "repo": "...", "token": "...", "basePath": "daily-review" } },
+  "storage": { "type": "github", "github": { "owner": "...", "repo": "...", "token": "...", "basePath": "" } },
   "language": "ko",
   "periods": { "daily": true, "weekly": true, "monthly": true, "quarterly": true, "yearly": false },
   "profile": { "company": "...", "role": "...", "team": "...", "context": "..." }
