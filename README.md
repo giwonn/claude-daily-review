@@ -145,9 +145,6 @@ Config is stored at `$CLAUDE_PLUGIN_DATA/config.json`.
     "role": "Your Role",
     "team": "Your Team",
     "context": "What you do in one line"
-  },
-  "privacy": {
-    "redactSecrets": true
   }
 }
 ```
@@ -178,9 +175,6 @@ Config is stored at `$CLAUDE_PLUGIN_DATA/config.json`.
     "role": "Your Role",
     "team": "Your Team",
     "context": "What you do in one line"
-  },
-  "privacy": {
-    "redactSecrets": true
   }
 }
 ```

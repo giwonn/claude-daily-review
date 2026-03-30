@@ -143,9 +143,6 @@ daily-review/
     "role": "직무",
     "team": "팀명",
     "context": "하는 일 한 줄 설명"
-  },
-  "privacy": {
-    "redactSecrets": true
   }
 }
 ```
@@ -176,9 +173,6 @@ daily-review/
     "role": "직무",
     "team": "팀명",
     "context": "하는 일 한 줄 설명"
-  },
-  "privacy": {
-    "redactSecrets": true
   }
 }
 ```

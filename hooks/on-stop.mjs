@@ -39,7 +39,6 @@ async function main() {
   try {
     const config = loadConfig();
     if (!config) return;
-    const redact = config.privacy?.redactSecrets ?? true;
     const storage = await createStorageAdapter(config);
     let data = '';
     process.stdin.setEncoding('utf-8');
@@ -59,7 +58,7 @@ async function main() {
 
     const sessionDir = getRawDir(input.session_id);
     const date = formatDate(new Date());
-    await appendRawLog(storage, sessionDir, date, input, redact);
+    await appendRawLog(storage, sessionDir, date, input);
 
     // Extract and save git activity from transcript
     if (input.transcript_path) {

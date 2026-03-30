@@ -127,7 +127,6 @@ async function main() {
   try {
     const config = loadConfig();
     if (!config) return;
-    const redact = config.privacy?.redactSecrets ?? true;
     const storage = await createStorageAdapter(config);
 
     // Read session metadata from local CLAUDE_PLUGIN_DATA
@@ -172,7 +171,7 @@ async function main() {
       for (const [date, entries] of Object.entries(missingByDate)) {
         const logPath = `${sessionDir}/${date}.jsonl`;
         const lines = entries.map(e =>
-          JSON.stringify({ type: e.type, message: redact ? sanitize(e.message) : e.message, session_id: sessionId, cwd: e.cwd, timestamp: e.timestamp })
+          JSON.stringify({ type: e.type, message: sanitize(e.message), session_id: sessionId, cwd: e.cwd, timestamp: e.timestamp })
         ).join('\n') + '\n';
         await storage.append(logPath, lines);
       }
