@@ -2,20 +2,20 @@
 
 [한국어](README.ko.md)
 
-Claude Code plugin that automatically captures your conversations and generates structured daily review markdown files in your Obsidian vault or GitHub repository.
+Claude Code plugin that automatically captures your conversations and generates structured review markdown files in your Obsidian vault or GitHub repository.
 
-Turn your daily AI-assisted development work into career documentation — automatically.
+Turn your daily AI-assisted development work into career documentation — on demand.
 
 ## Features
 
 - **Auto-capture**: Hook-based conversation logging with zero manual effort
+- **On-demand reviews**: Generate reviews when you want with natural language (`/generate`)
+- **Natural language targeting**: "yesterday's review", "Q1 summary", "my-app project March review"
 - **Structured reviews**: Work summaries, learnings, decisions, and Q&A organized by project
 - **Cascading summaries**: Daily → Weekly → Monthly → Quarterly → Yearly
-- **Project tracking**: Per-project summaries for resume/portfolio building
 - **Obsidian integration**: Direct markdown output with tags and links
 - **GitHub integration**: Store reviews in a GitHub repo with OAuth authentication
-- **Concurrency-safe**: Session-isolated writes with deferred merge
-- **Crash recovery**: Raw logs preserved even on force-quit
+- **Crash recovery**: Missing raw logs auto-recovered from transcripts on session start
 
 ## Installation
 
@@ -35,6 +35,29 @@ This will ask for:
 1. Your storage choice: **local** (Obsidian vault or any directory) or **GitHub** (remote repository)
 2. A brief professional profile (company, role, team)
 3. Which summary periods to enable
+
+## How It Works
+
+```
+Every response     →  Raw log saved automatically (async, non-blocking)
+Session start      →  Missing logs recovered from transcripts
+/generate          →  AI generates reviews from raw logs on demand
+```
+
+### Generating Reviews
+
+Use `/generate` with natural language to control what gets generated:
+
+```
+/generate                                → Generate all missing reviews
+/generate yesterday's review             → Daily review for yesterday
+/generate last week's weekly summary     → Weekly summary for last week
+/generate Q1 review                      → Quarterly summary for Q1
+/generate my-app project March review    → March review filtered to my-app
+/generate March 1-15                     → Daily reviews for date range
+```
+
+When no arguments are given, it generates all reviews that haven't been created yet (incremental mode).
 
 ## GitHub Storage
 
@@ -56,18 +79,10 @@ After authenticating, you can either:
 
 Files are read and written via the **GitHub Contents API**. Each review file is committed directly to the repository as a markdown file, using the same folder structure as local storage. No local git installation is required.
 
-## How It Works
-
-```
-Every response  →  Raw log saved (async, non-blocking)
-Session end     →  AI generates structured review
-Next session    →  Reviews merged into daily file + periodic summaries generated
-```
-
 ## Vault Structure
 
 ```
-vault/daily-review/
+daily-review/
 ├── daily/2026-03-28.md          ← Daily review (all projects)
 ├── weekly/2026-W13.md           ← Weekly summary
 ├── monthly/2026-03.md           ← Monthly summary
@@ -89,9 +104,10 @@ Config is stored at `$CLAUDE_PLUGIN_DATA/config.json`.
 {
   "storage": {
     "type": "local",
-    "vaultPath": "/path/to/obsidian/vault"
+    "local": {
+      "basePath": "/path/to/obsidian/vault/daily-review"
+    }
   },
-  "reviewFolder": "daily-review",
   "language": "ko",
   "periods": {
     "daily": true,
@@ -115,12 +131,13 @@ Config is stored at `$CLAUDE_PLUGIN_DATA/config.json`.
 {
   "storage": {
     "type": "github",
-    "owner": "your-github-username",
-    "repo": "daily-review",
-    "branch": "main",
-    "token": "<stored by OAuth flow>"
+    "github": {
+      "owner": "your-github-username",
+      "repo": "daily-review",
+      "token": "<stored by OAuth flow>",
+      "basePath": "daily-review"
+    }
   },
-  "reviewFolder": "daily-review",
   "language": "ko",
   "periods": {
     "daily": true,
