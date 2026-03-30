@@ -90,7 +90,7 @@ TMPEOF
 
 Then try to read the shared config:
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/lib/storage-cli.mjs" read .config.json
+CLAUDE_PLUGIN_DATA="${CLAUDE_PLUGIN_DATA}" node "${CLAUDE_PLUGIN_ROOT}/lib/storage-cli.mjs" read .config.json
 ```
 
 If `.config.json` exists in the repo, parse it and **skip Steps 2-3** (Profile and Periods). Use the values from the shared config. Tell the user:
@@ -211,7 +211,7 @@ For **GitHub storage**, the local config only has storage credentials:
 
 Additionally, **save shared config to the repo** so other machines can restore it:
 ```bash
-echo '<shared_config_json>' | node "${CLAUDE_PLUGIN_ROOT}/lib/storage-cli.mjs" write .config.json
+echo '<shared_config_json>' | CLAUDE_PLUGIN_DATA="${CLAUDE_PLUGIN_DATA}" node "${CLAUDE_PLUGIN_ROOT}/lib/storage-cli.mjs" write .config.json
 ```
 
 The shared config contains only profile, periods, and language (NO storage credentials):
