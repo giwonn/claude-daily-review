@@ -83,7 +83,7 @@ Ask using AskUserQuestion:
 After repo is selected/created, **save a minimal config first** so `storage-cli.mjs` can connect to the repo:
 ```bash
 cat > "${CLAUDE_PLUGIN_DATA}/config.json" << 'TMPEOF'
-{"storage":{"type":"github","github":{"owner":"<owner>","repo":"<repo>","token":"<access_token>","basePath":"daily-review"}}}
+{"storage":{"type":"github","github":{"owner":"<owner>","repo":"<repo>","token":"<access_token>","basePath":""}}}
 TMPEOF
 ```
 (Replace `<owner>`, `<repo>`, `<access_token>` with actual values.)
