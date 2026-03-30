@@ -58,11 +58,14 @@ async function main() {
     const date = formatDate(new Date());
     await appendRawLog(storage, sessionDir, date, input);
 
-    // Save transcript path for session recovery
+    // Save transcript path locally for session recovery (not to remote storage)
     if (input.transcript_path) {
-      const metaPath = `${sessionDir}/.meta.json`;
-      const meta = JSON.stringify({ transcript_path: input.transcript_path, session_id: input.session_id });
-      await storage.write(metaPath, meta);
+      const dataDir = process.env.CLAUDE_PLUGIN_DATA;
+      if (dataDir) {
+        const metaDir = join(dataDir, 'session-meta', input.session_id);
+        mkdirSync(metaDir, { recursive: true });
+        writeFileSync(join(metaDir, 'meta.json'), JSON.stringify({ transcript_path: input.transcript_path, session_id: input.session_id }));
+      }
     }
   } catch (err) {
     try {

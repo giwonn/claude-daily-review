@@ -2,7 +2,7 @@
 // @ts-check
 // Recovers missing raw log entries from transcript files on SessionStart.
 // Uses a lock file to prevent concurrent recovery across multiple sessions.
-import { readFileSync, writeFileSync, unlinkSync, existsSync, mkdirSync } from 'fs';
+import { readFileSync, readdirSync, writeFileSync, unlinkSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { loadConfig, createStorageAdapter } from '../lib/config.mjs';
 import { formatDate } from '../lib/periods.mjs';
@@ -122,17 +122,24 @@ async function main() {
     if (!config) return;
     const storage = await createStorageAdapter(config);
 
-    const sessions = await storage.list('.raw');
+    // Read session metadata from local CLAUDE_PLUGIN_DATA
+    const dataDir = process.env.CLAUDE_PLUGIN_DATA;
+    if (!dataDir) return;
+    const metaBaseDir = join(dataDir, 'session-meta');
+    if (!existsSync(metaBaseDir)) return;
+
+    const sessions = readdirSync(metaBaseDir).filter(f => {
+      try { return existsSync(join(metaBaseDir, f, 'meta.json')); } catch { return false; }
+    });
 
     for (const sessionId of sessions) {
       const sessionDir = getRawDir(sessionId);
 
-      // Read .meta.json for transcript path
-      const metaContent = await storage.read(`${sessionDir}/.meta.json`);
-      if (!metaContent) continue;
-
+      // Read meta.json from local filesystem
       let meta;
-      try { meta = JSON.parse(metaContent); } catch { continue; }
+      try {
+        meta = JSON.parse(readFileSync(join(metaBaseDir, sessionId, 'meta.json'), 'utf-8'));
+      } catch { continue; }
       if (!meta.transcript_path || !existsSync(meta.transcript_path)) continue;
 
       // Compare transcript entries with raw log entries
