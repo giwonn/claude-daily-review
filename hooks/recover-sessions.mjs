@@ -23,19 +23,25 @@ function acquireLock() {
 
   mkdirSync(dirname(lockPath), { recursive: true });
 
-  // Check for stale lock
-  if (existsSync(lockPath)) {
+  const lockData = JSON.stringify({ pid: process.pid, timestamp: new Date().toISOString() });
+
+  try {
+    writeFileSync(lockPath, lockData, { flag: 'wx' });
+    return true;
+  } catch {
+    // File exists — check if stale
     try {
       const lock = JSON.parse(readFileSync(lockPath, 'utf-8'));
       const age = Date.now() - new Date(lock.timestamp).getTime();
-      if (age < LOCK_STALE_MS) return false; // Another session is recovering
-    } catch { /* corrupt lock, take over */ }
+      if (age < LOCK_STALE_MS) return false;
+      unlinkSync(lockPath);
+      // Retry once after removing stale lock
+      try {
+        writeFileSync(lockPath, lockData, { flag: 'wx' });
+        return true;
+      } catch { return false; }
+    } catch { return false; }
   }
-
-  try {
-    writeFileSync(lockPath, JSON.stringify({ pid: process.pid, timestamp: new Date().toISOString() }));
-    return true;
-  } catch { return false; }
 }
 
 function releaseLock() {
