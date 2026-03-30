@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 // @ts-check
 import { loadConfig, createStorageAdapter } from '../lib/config.mjs';
-import { parseHookInput, appendRawLog } from '../lib/raw-logger.mjs';
+import { parseHookInput, appendRawLog, appendGitLogs } from '../lib/raw-logger.mjs';
+import { parseGitActivity } from '../lib/git-parser.mjs';
 import { getRawDir } from '../lib/vault.mjs';
 import { formatDate } from '../lib/periods.mjs';
 import { readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { execSync } from 'child_process';
 import { dirname, join } from 'path';
 
 /**
@@ -57,6 +59,36 @@ async function main() {
     const sessionDir = getRawDir(input.session_id);
     const date = formatDate(new Date());
     await appendRawLog(storage, sessionDir, date, input);
+
+    // Extract and save git activity from transcript
+    if (input.transcript_path) {
+      const gitEntries = parseGitActivity(input.transcript_path);
+      if (gitEntries.length > 0) {
+        // Resolve remote URL for each unique cwd
+        /** @type {Map<string, string>} */
+        const remoteByDir = new Map();
+        for (const entry of gitEntries) {
+          if (!entry.cwd || remoteByDir.has(entry.cwd)) continue;
+          try {
+            const remote = execSync('git remote get-url origin', { cwd: entry.cwd, encoding: 'utf-8', timeout: 5000 }).trim();
+            remoteByDir.set(entry.cwd, remote);
+          } catch { remoteByDir.set(entry.cwd, ''); }
+        }
+        for (const entry of gitEntries) {
+          entry.remote = remoteByDir.get(entry.cwd) || '';
+        }
+
+        // Get current gh account
+        let ghAccount = '';
+        try {
+          const status = execSync('gh auth status 2>&1', { encoding: 'utf-8', timeout: 5000 });
+          const match = status.match(/Logged in to github\.com account (\S+)/);
+          if (match) ghAccount = match[1];
+        } catch { /* gh not available or not logged in */ }
+
+        await appendGitLogs(storage, sessionDir, date, gitEntries, input.session_id, ghAccount);
+      }
+    }
 
     // Save transcript path locally for session recovery (not to remote storage)
     if (input.transcript_path) {

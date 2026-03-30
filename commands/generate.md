@@ -65,8 +65,23 @@ This outputs JSON with:
 - `needs.quarterly`: quarters that need quarterly summary
 - `needs.yearly`: years that need yearly summary
 - `logs`: raw conversation logs keyed by date
+- `gitActivity`: git commit entries keyed by date (each with `action`, `hash`, `branch`, `message`, `remote`, `ghAccount`, `cwd`)
 
 If `needs` is all empty, tell the user "해당 기간에 생성할 회고가 없습니다." and stop.
+
+## Step 1.5: Git Account Access Check
+
+If `gitActivity` has entries, verify account access before generating reviews:
+
+1. Collect unique `ghAccount` values from all git entries
+2. Run `gh auth status` to get the list of currently authenticated accounts
+3. For each `ghAccount` NOT in the authenticated list, ask the user via AskUserQuestion:
+   > "다음 GitHub 계정의 커밋 이력이 있지만, 현재 gh에 로그인되어 있지 않습니다: `{account}`"
+   - option 1: label: "로그인하기", description: "gh auth login으로 인증합니다"
+   - option 2: label: "해당 커밋 무시", description: "이 계정의 커밋 정보 없이 진행합니다"
+   - If "로그인하기": Tell the user to run `! gh auth login` in their terminal, then verify with `gh auth status`
+   - If "해당 커밋 무시": Remove that account's entries from `gitActivity`
+4. Remember the original active account (`gh auth status --active`) so you can restore it later
 
 ## Step 2: Apply Filters
 
@@ -84,7 +99,26 @@ For each date in `needs.daily`:
    - **배운 것**: New things learned
    - **고민한 포인트**: Decisions and reasoning
    - **질문과 답변**: Key Q&A (summarized)
+   - **커밋 내역**: If `gitActivity[date]` has entries for this project's cwd (see below)
 4. General questions go under "미분류"
+
+### Using Git Activity in Daily Reviews
+
+If `gitActivity[date]` has entries matching a project (by `cwd`):
+
+1. Switch gh account if needed: `gh auth switch --user <ghAccount>`
+2. Parse `remote` to extract `owner/repo`:
+   - SSH format `git@github.com:owner/repo.git` → `owner/repo`
+   - HTTPS format `https://github.com/owner/repo.git` → `owner/repo`
+3. Fetch commit details: `gh api repos/{owner}/{repo}/commits/{hash} --jq '.files[].filename'` to see changed files
+4. Use the conversation context + commit info to describe what was actually implemented
+5. After all lookups for a given account, switch back to the original account
+
+Include in the review:
+```markdown
+**커밋 내역:**
+- [`{short_hash}`](https://github.com/{owner}/{repo}/commit/{hash}) — {message}
+```
 
 Write via:
 ```bash
@@ -193,3 +227,9 @@ Tell the user what was generated:
 > - 연간 요약: {count}개
 
 Only show lines where count > 0.
+
+If git activity was included, also report:
+> - 커밋 연동: {count}개 커밋 반영
+
+If any git entries were skipped (account not logged in), note:
+> - ⚠ 일부 커밋은 GitHub 계정 미연동으로 제외됨

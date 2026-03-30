@@ -55,6 +55,16 @@ export interface HookInput {
   [key: string]: unknown;
 }
 
+export interface GitEntry {
+  action: 'commit';
+  hash: string;
+  branch: string;
+  message?: string;
+  remote?: string;
+  cwd: string;
+  timestamp: string;
+}
+
 export interface DeviceCodeResponse {
   device_code: string;
   user_code: string;
