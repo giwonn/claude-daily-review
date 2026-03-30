@@ -80,12 +80,20 @@ Ask using AskUserQuestion:
 
 **1c. Check for shared config in repo:**
 
-After repo is selected/created, try to read the shared config:
+After repo is selected/created, **save a minimal config first** so `storage-cli.mjs` can connect to the repo:
+```bash
+cat > "${CLAUDE_PLUGIN_DATA}/config.json" << 'TMPEOF'
+{"storage":{"type":"github","github":{"owner":"<owner>","repo":"<repo>","token":"<access_token>","basePath":"daily-review"}}}
+TMPEOF
+```
+(Replace `<owner>`, `<repo>`, `<access_token>` with actual values.)
+
+Then try to read the shared config:
 ```bash
 node "${CLAUDE_PLUGIN_ROOT}/lib/storage-cli.mjs" read .config.json
 ```
 
-If `.config.json` exists in the repo, parse it and **skip Steps 1-3** (Profile and Periods). Use the values from the shared config. Tell the user:
+If `.config.json` exists in the repo, parse it and **skip Steps 2-3** (Profile and Periods). Use the values from the shared config. Tell the user:
 > "이전에 저장된 설정을 찾았습니다! 프로필과 주기 설정을 자동으로 복원합니다."
 
 If `.config.json` does not exist, proceed to Step 2 (Profile).
