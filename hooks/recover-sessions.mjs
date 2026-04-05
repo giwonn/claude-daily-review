@@ -7,7 +7,7 @@ import { join, dirname, basename } from 'path';
 import { loadConfig, createStorageAdapter } from '../lib/config.mjs';
 import { sanitize } from '../lib/sanitizer.mjs';
 import { formatDate } from '../lib/periods.mjs';
-import { getRawDir } from '../lib/vault.mjs';
+import { getRawDir, getRawLogPath } from '../lib/vault.mjs';
 
 const LOCK_STALE_MS = 120_000; // 2 minutes
 
@@ -95,19 +95,19 @@ function parseTranscript(transcriptPath) {
 }
 
 /**
- * Count raw log entries for a session across all date files.
+ * Count raw log entries for a session across all date folders.
  * @param {import('../lib/types.d.ts').StorageAdapter} storage
- * @param {string} sessionDir
+ * @param {string} sessionId
  * @returns {Promise<{count: number, timestamps: Set<string>}>}
  */
-async function getRawLogState(storage, sessionDir) {
+async function getRawLogState(storage, sessionId) {
   const timestamps = new Set();
   let count = 0;
   try {
-    const files = await storage.list(sessionDir);
-    for (const file of files) {
-      if (!file.endsWith('.jsonl')) continue;
-      const content = await storage.read(`${sessionDir}/${file}`);
+    const dates = await storage.list('raw');
+    for (const date of dates) {
+      const logPath = getRawLogPath(date, sessionId);
+      const content = await storage.read(logPath);
       if (!content) continue;
       for (const line of content.trim().split('\n')) {
         try {
@@ -117,7 +117,7 @@ async function getRawLogState(storage, sessionDir) {
         } catch { continue; }
       }
     }
-  } catch { /* session dir might not be listable */ }
+  } catch { /* raw dir might not exist */ }
   return { count, timestamps };
 }
 
@@ -140,8 +140,6 @@ async function main() {
     });
 
     for (const sessionId of sessions) {
-      const sessionDir = getRawDir(sessionId);
-
       // Read meta.json from local filesystem
       let meta;
       try {
@@ -153,7 +151,7 @@ async function main() {
       const transcriptEntries = parseTranscript(meta.transcript_path);
       if (transcriptEntries.length === 0) continue;
 
-      const rawState = await getRawLogState(storage, sessionDir);
+      const rawState = await getRawLogState(storage, sessionId);
 
       // If raw logs have same or more entries, skip
       if (rawState.count >= transcriptEntries.length) continue;
@@ -169,7 +167,9 @@ async function main() {
 
       // Append missing entries to appropriate date files
       for (const [date, entries] of Object.entries(missingByDate)) {
-        const logPath = `${sessionDir}/${date}.jsonl`;
+        const dir = getRawDir(date);
+        await storage.mkdir(dir);
+        const logPath = getRawLogPath(date, sessionId);
         const lines = entries.map(e =>
           JSON.stringify({ type: e.type, message: sanitize(e.message), session_id: sessionId, cwd: e.cwd, timestamp: e.timestamp })
         ).join('\n') + '\n';
