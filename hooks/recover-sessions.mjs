@@ -95,17 +95,17 @@ function parseTranscript(transcriptPath) {
 }
 
 /**
- * Count raw log entries for a session across all date folders.
+ * Count raw log entries for a session, checking only the given date folders.
  * @param {import('../lib/types.d.ts').StorageAdapter} storage
  * @param {string} sessionId
+ * @param {Set<string>} datesToCheck
  * @returns {Promise<{count: number, timestamps: Set<string>}>}
  */
-async function getRawLogState(storage, sessionId) {
+async function getRawLogState(storage, sessionId, datesToCheck) {
   const timestamps = new Set();
   let count = 0;
-  try {
-    const dates = await storage.list('raw');
-    for (const date of dates) {
+  for (const date of datesToCheck) {
+    try {
       const logPath = getRawLogPath(date, sessionId);
       const content = await storage.read(logPath);
       if (!content) continue;
@@ -116,8 +116,8 @@ async function getRawLogState(storage, sessionId) {
           count++;
         } catch { continue; }
       }
-    }
-  } catch { /* raw dir might not exist */ }
+    } catch { continue; }
+  }
   return { count, timestamps };
 }
 
@@ -151,7 +151,11 @@ async function main() {
       const transcriptEntries = parseTranscript(meta.transcript_path);
       if (transcriptEntries.length === 0) continue;
 
-      const rawState = await getRawLogState(storage, sessionId);
+      // Extract dates from transcript to avoid scanning all date folders
+      const datesInTranscript = new Set(transcriptEntries.map(e =>
+        e.timestamp ? formatDate(new Date(e.timestamp)) : formatDate(new Date())
+      ));
+      const rawState = await getRawLogState(storage, sessionId, datesInTranscript);
 
       // If raw logs have same or more entries, skip
       if (rawState.count >= transcriptEntries.length) continue;
