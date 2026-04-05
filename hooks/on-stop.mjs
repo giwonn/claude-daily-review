@@ -3,7 +3,6 @@
 import { loadConfig, createStorageAdapter } from '../lib/config.mjs';
 import { parseHookInput, appendRawLog, appendGitLogs } from '../lib/raw-logger.mjs';
 import { parseGitActivity } from '../lib/git-parser.mjs';
-import { getRawDir } from '../lib/vault.mjs';
 import { formatDate } from '../lib/periods.mjs';
 import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { execSync } from 'child_process';
@@ -56,9 +55,8 @@ async function main() {
     input.last_user_message = userMessage;
     input.user_timestamp = userTimestamp;
 
-    const sessionDir = getRawDir(input.session_id);
     const date = formatDate(new Date());
-    await appendRawLog(storage, sessionDir, date, input);
+    await appendRawLog(storage, date, input);
 
     // Extract and save git activity from transcript
     if (input.transcript_path) {
@@ -86,7 +84,7 @@ async function main() {
           if (match) ghAccount = match[1];
         } catch { /* gh not available or not logged in */ }
 
-        await appendGitLogs(storage, sessionDir, date, gitEntries, input.session_id, ghAccount);
+        await appendGitLogs(storage, date, gitEntries, input.session_id, ghAccount);
       }
     }
 
