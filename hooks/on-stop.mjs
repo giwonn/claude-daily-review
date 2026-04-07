@@ -5,7 +5,7 @@ import { parseHookInput } from '../lib/raw-logger.mjs';
 import { sanitize } from '../lib/sanitizer.mjs';
 import { formatDate } from '../lib/periods.mjs';
 import { getRawLogPath, getRawDir } from '../lib/vault.mjs';
-import { appendToBuffer, shouldFlush, getUnflushedContent, markFlushed } from '../lib/buffer.mjs';
+import { appendToBuffer, getUnflushedBytes, getUnflushedContent, markFlushed } from '../lib/buffer.mjs';
 import { updateIndex } from '../lib/index-manager.mjs';
 import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { dirname, join, basename } from 'path';
@@ -90,9 +90,9 @@ async function main() {
         timestamp: now,
       });
 
-      // Flush to GitHub if threshold exceeded
-      if (shouldFlush(dataDir, input.session_id)) {
-        const storage = await createStorageAdapter(config);
+      // Flush based on storage strategy (local: immediate, github: threshold)
+      const storage = await createStorageAdapter(config);
+      if (storage.shouldFlush(getUnflushedBytes(dataDir, input.session_id))) {
         const unflushed = getUnflushedContent(dataDir, input.session_id);
         if (unflushed) {
           const logPath = getRawLogPath(date, input.session_id);

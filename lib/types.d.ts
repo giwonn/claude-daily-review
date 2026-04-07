@@ -45,6 +45,7 @@ export interface StorageAdapter {
   list(dir: string): Promise<string[]>;
   mkdir(dir: string): Promise<void>;
   isDirectory(path: string): Promise<boolean>;
+  shouldFlush(unflushedBytes: number): boolean;
 }
 
 export interface HookInput {
