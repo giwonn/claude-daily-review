@@ -1,6 +1,6 @@
 {
   "name": "@giwonn/claude-daily-review",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "type": "module",
   "description": "Claude Code plugin that auto-captures conversations for daily review and career documentation",
   "repository": {
