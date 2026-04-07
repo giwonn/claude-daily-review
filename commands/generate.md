@@ -108,13 +108,14 @@ For each date in `needs.daily`:
 
 1. Take all log entries from `logs[date]`
 2. Group by `cwd` (last path segment = project name)
-3. For each project, analyze user/assistant pairs and extract:
+3. For each project, further group by **topic** (feature, bug, task) based on conversation content. If a session covers multiple distinct features/topics within the same project, split them into separate sections. If only one topic exists, use a single section.
+4. For each project-topic group, analyze user/assistant pairs and extract:
    - **작업 요약**: What was accomplished (use profile for business context)
    - **배운 것**: New things learned
    - **고민한 포인트**: Decisions and reasoning
    - **질문과 답변**: Key Q&A (summarized)
    - **커밋 내역**: If `gitActivity[date]` has entries for this project's cwd (see below)
-4. General questions go under "미분류"
+5. General questions go under "미분류"
 
 ### Using Git Activity in Daily Reviews
 
@@ -193,7 +194,11 @@ projects: [{names}]
 
 # {date} Daily Review
 
-## [{project}] {title}
+## [{project}] {topic-title}
+**작업 요약:** {summary}
+
+<!-- 같은 프로젝트에서 여러 토픽이 있으면 섹션을 반복 -->
+## [{project}] {another-topic-title}
 **작업 요약:** {summary}
 **배운 것:**
 - {item}
