@@ -72,3 +72,21 @@ export interface DeviceCodeResponse {
   expires_in: number;
   interval: number;
 }
+
+export interface BufferMeta {
+  sessionId: string;
+  lastActive: string;
+  flushedOffset: number;
+  bufferSizeBytes: number;
+}
+
+export interface IndexData {
+  byDate: Record<string, string[]>;
+  byProject: Record<string, string[]>;
+  sessions: Record<string, {
+    dates: string[];
+    projects: string[];
+    lastTimestamp: string;
+  }>;
+  lastUpdated: string;
+}
