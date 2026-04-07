@@ -12,17 +12,20 @@ Turn your daily AI-assisted development work into career documentation — on de
 
 ## Features
 
-- **Auto-capture**: Hook-based conversation logging with zero manual effort
+- **Auto-capture**: Hook-based conversation logging on every turn with local buffering
 - **On-demand reviews**: Generate reviews when you want with natural language (`/generate`)
+- **Review modes**: Generate as daily retrospective, career resume, blog post, or custom format
 - **Natural language targeting**: "yesterday's review", "Q1 summary", "my-app project March review"
+- **Project-based reviews**: Filter and generate reviews for specific projects
 - **Structured reviews**: Work summaries, learnings, decisions, and Q&A organized by project
 - **Cascading summaries**: Daily → Weekly → Monthly → Quarterly → Yearly
 - **Git commit integration**: Automatically captures git commits from sessions and links them in reviews
 - **Secret redaction**: API keys, tokens, and passwords are automatically masked before storage
+- **Local buffer + index**: Minimized API calls with local buffering and index-based fast lookups
 - **Obsidian integration**: Direct markdown output with tags and links
 - **GitHub integration**: Store reviews in a GitHub repo with OAuth authentication
 - **Multi-machine sync**: GitHub storage shares config across machines automatically
-- **Crash recovery**: Missing raw logs auto-recovered from transcripts on session start
+- **Review reminder**: Notifies when reviews haven't been generated in 2+ weeks
 
 ## Installation
 
@@ -54,9 +57,26 @@ This will ask for:
 ## How It Works
 
 ```
-Session end        →  Raw log + git commits saved automatically (async, non-blocking)
-Session start      →  Missing logs recovered from transcripts
-/generate          →  AI generates reviews from raw logs on demand
+Every Turn (Stop hook)
+  │
+  ├─→ Local buffer append + index update
+  │
+  └─→ Buffer > 10KB? ──yes──→ Flush to GitHub
+                       no──→ Wait
+
+Session Start
+  │
+  ├─→ Flush previous sessions' buffers → GitHub
+  ├─→ Parse git activity from transcripts
+  └─→ Review reminder check (2+ weeks?)
+
+/generate "blog post for March"
+  │
+  ├─→ Parse intent (date / project / mode)
+  ├─→ Flush all local buffers
+  ├─→ Index lookup → collect target logs
+  ├─→ Generate reviews (review / resume / blog / custom)
+  └─→ Batch write to storage
 ```
 
 ### Generating Reviews
@@ -72,7 +92,22 @@ Use `/generate` with natural language to control what gets generated:
 /generate March 1-15                     → Daily reviews for date range
 ```
 
-When no arguments are given, it generates all reviews that haven't been created yet (incremental mode).
+#### Review Modes
+
+You can specify the output format with natural language:
+
+```
+/generate 블로그로 3월 정리               → Blog post format
+/generate 경력기술서용 1분기 요약          → Career resume format
+/generate 팀 주간보고서로 이번주           → Custom format (team report)
+```
+
+| Mode | Tone | Structure |
+|------|------|-----------|
+| **review** (default) | Internal, concise | Work summary, learnings, decisions, Q&A |
+| **resume** | Formal, outcome-focused | Problem → alternatives → decision → impact → improvements |
+| **blog** | Conversational, storytelling | Introduction → attempts → solution → insights |
+| **custom** | User-specified | Follows user's format/tone instructions |
 
 ### Git Commit Integration
 
@@ -80,6 +115,16 @@ When you make git commits during a session, the plugin automatically:
 1. Extracts commit hashes, branches, and messages from the transcript
 2. Resolves remote URLs and GitHub account info
 3. Includes commit details in daily reviews with links to GitHub
+
+## Upgrading
+
+If you're upgrading from v0.5.x, run the migration command to build the index:
+
+```
+/daily-review-migrate
+```
+
+This scans existing raw logs and creates a local index for fast lookups. The plugin will prompt you automatically if the index is missing.
 
 ## GitHub Storage
 
@@ -107,11 +152,19 @@ Profile, language, and period settings are saved as `.config.json` in the repo, 
 
 ```
 daily-review/
+├── raw/2026-03-28/              ← Raw conversation logs (per date)
+│   └── {session-id}.jsonl
 ├── daily/2026-03-28.md          ← Daily review (all projects)
 ├── weekly/2026-W13.md           ← Weekly summary
 ├── monthly/2026-03.md           ← Monthly summary
 ├── quarterly/2026-Q1.md         ← Quarterly summary
 ├── yearly/2026.md               ← Yearly summary
+├── resume/                      ← Career resume mode output
+│   ├── daily/2026-03-28.md
+│   └── quarterly/2026-Q1.md
+├── blog/                        ← Blog mode output
+│   ├── daily/2026-03-28.md
+│   └── monthly/2026-03.md
 ├── projects/my-app/
 │   ├── 2026-03-28.md            ← Project daily detail
 │   └── summary.md               ← Cumulative project summary
