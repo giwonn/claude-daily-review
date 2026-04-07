@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0
+
+- Added `/flush` command for manual buffer flush to remote storage on demand
+- Added `SessionEnd` hook to automatically flush remaining buffers on normal session exit
+- Added shared `flush.mjs` script used by both the slash command and the hook
+
 ## 0.7.0
 
 - Added topic-level grouping in daily reviews — same-project logs are now split by feature/topic for clearer per-feature retrospectives
