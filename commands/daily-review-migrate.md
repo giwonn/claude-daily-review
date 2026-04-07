@@ -49,7 +49,8 @@ console.log(exists ? 'EXISTS' : 'NOT_FOUND');
 CLAUDE_PLUGIN_DATA="${CLAUDE_PLUGIN_DATA}" node "${CLAUDE_PLUGIN_ROOT}/lib/storage-cli.mjs" list .raw
 ```
 
-`.raw`가 없으면: "이미 마이그레이션이 완료되었거나, 마이그레이션할 데이터가 없습니다."
+`.raw`가 없고 인덱스도 이미 존재하면: "이미 마이그레이션이 완료되었거나, 마이그레이션할 데이터가 없습니다."
+`.raw`가 없지만 인덱스가 없으면: Step 3-5를 건너뛰고 Step 6 (인덱스 빌드)로 진행합니다.
 
 ### Step 3: 마이그레이션 실행
 
@@ -205,3 +206,58 @@ console.log('DELETED');
 
 삭제 완료 후:
 > "`.raw/` 폴더를 삭제했습니다. 마이그레이션이 완료되었습니다!"
+
+### Step 6: 인덱스 빌드
+
+raw 로그를 스캔하여 인덱스 파일을 생성합니다.
+
+```bash
+CLAUDE_PLUGIN_DATA="${CLAUDE_PLUGIN_DATA}" node -e "
+import { loadConfig, createStorageAdapter } from '${CLAUDE_PLUGIN_ROOT}/lib/config.mjs';
+import { updateIndex } from '${CLAUDE_PLUGIN_ROOT}/lib/index-manager.mjs';
+import { basename } from 'path';
+
+const config = loadConfig();
+if (!config) { console.log('NO_CONFIG'); process.exit(0); }
+const storage = await createStorageAdapter(config);
+const dataDir = process.env.CLAUDE_PLUGIN_DATA;
+if (!dataDir) { console.log('NO_DATA_DIR'); process.exit(0); }
+
+const dates = await storage.list('raw');
+let indexed = 0;
+for (const date of dates) {
+  const files = await storage.list('raw/' + date);
+  for (const file of files) {
+    if (!file.endsWith('.jsonl')) continue;
+    const sessionId = file.replace('.jsonl', '');
+    const content = await storage.read('raw/' + date + '/' + file);
+    if (!content) continue;
+
+    const projects = new Set();
+    let lastTimestamp = '';
+    for (const line of content.trim().split('\n')) {
+      try {
+        const entry = JSON.parse(line);
+        if (entry.type === 'git') continue;
+        if (entry.cwd) projects.add(basename(entry.cwd));
+        if (entry.timestamp && entry.timestamp > lastTimestamp) lastTimestamp = entry.timestamp;
+      } catch { continue; }
+    }
+
+    for (const project of projects) {
+      updateIndex(dataDir, { sessionId, date, project, timestamp: lastTimestamp });
+    }
+    if (projects.size === 0) {
+      updateIndex(dataDir, { sessionId, date, project: 'unknown', timestamp: lastTimestamp });
+    }
+    indexed++;
+  }
+}
+console.log('INDEXED:' + indexed);
+"
+```
+
+출력에서 `INDEXED:N`을 파싱하여 사용자에게 보여줍니다:
+> "N개 파일의 인덱스를 생성했습니다."
+
+인덱스가 이미 존재하는 경우에도 재빌드합니다 (기존 인덱스를 덮어씀).
