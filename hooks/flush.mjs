@@ -56,6 +56,11 @@ async function main() {
     console.log(`FLUSHED:${flushed}`);
   } catch (err) {
     console.error(`ERROR:${err.message}`);
+    try {
+      const { buildIssueUrl } = await import('../lib/issue-url.mjs');
+      const issueUrl = buildIssueUrl({ context: 'flush', error: err });
+      console.error(`이슈로 보고하려면: ${issueUrl}`);
+    } catch {}
     process.exit(1);
   }
 }

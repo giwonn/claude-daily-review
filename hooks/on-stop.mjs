@@ -122,6 +122,11 @@ async function main() {
       mkdirSync(dirname(logPath), { recursive: true });
       writeFileSync(logPath, `${new Date().toISOString()} on-stop: ${err.message}\n${err.stack}\n`, { flag: 'a' });
     } catch {}
+    try {
+      const { buildIssueUrl } = await import('../lib/issue-url.mjs');
+      const issueUrl = buildIssueUrl({ context: 'on-stop', error: err });
+      process.stdout.write(`daily-review 플러그인 오류가 발생했습니다. 이슈로 보고하려면: ${issueUrl}\n`);
+    } catch {}
   }
 }
 main();
