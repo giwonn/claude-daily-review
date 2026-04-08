@@ -1,11 +1,12 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "giwonn-plugins",
+  "deprecated": true,
   "owner": {
     "name": "giwonn"
   },
   "metadata": {
-    "description": "giwonn's Claude Code plugins"
+    "description": "[DEPRECATED] This marketplace has moved to giwonn/giwonn-plugins. Please run: /plugin marketplace remove giwonn-plugins && /plugin marketplace add giwonn/giwonn-plugins"
   },
   "plugins": [
     {
