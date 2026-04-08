@@ -11,6 +11,11 @@ allowed-tools: ["Read", "Write", "Bash"]
 - **NEVER show raw error messages or file paths to the user.**
 - Use the user's profile to add business context.
 - Today's date: use the system date for resolving relative expressions.
+- **에러 발생 시 이슈 보고 제안:** Bash 명령이 실패하면, 한국어로 에러를 설명한 뒤 다음을 실행:
+  ```bash
+  node "${CLAUDE_PLUGIN_ROOT}/lib/issue-url.mjs" --context "generate" --message "<에러 메시지>" --stack "<스택트레이스>"
+  ```
+  출력된 URL을 사용자에게 보여주며: "이 문제를 GitHub 이슈로 보고하시겠습니까? [이슈 생성](<URL>)"
 
 ## Step 0: Interpret User Request
 

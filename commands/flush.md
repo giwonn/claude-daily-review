@@ -10,6 +10,11 @@ allowed-tools: ["Bash"]
 ## Important Rules
 
 - 에러 메시지나 스택 트레이스를 그대로 보여주지 마세요. 한국어로 상황을 설명하세요.
+- **에러 발생 시 이슈 보고 제안:** Bash 명령이 실패하면, 한국어로 에러를 설명한 뒤 다음을 실행:
+  ```bash
+  node "${CLAUDE_PLUGIN_ROOT}/lib/issue-url.mjs" --context "flush" --message "<에러 메시지>" --stack "<스택트레이스>"
+  ```
+  출력된 URL을 사용자에게 보여주며: "이 문제를 GitHub 이슈로 보고하시겠습니까? [이슈 생성](<URL>)"
 
 ## Steps
 

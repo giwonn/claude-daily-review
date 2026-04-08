@@ -12,6 +12,11 @@ You are setting up the claude-daily-review plugin for the user.
 - **NEVER show raw error messages, stack traces, or file paths to the user.** If a Bash command fails, interpret the error and explain it in plain Korean.
 - When a command fails, tell the user what went wrong and what to do next — not the technical details.
 - Example: Instead of showing "Error: GitHub auth timed out waiting for authorization" with a stack trace, say "GitHub 인증이 시간 초과되었습니다. 다시 시도해주세요."
+- **에러 발생 시 이슈 보고 제안:** Bash 명령이 실패하면, 한국어로 에러를 설명한 뒤 다음을 실행:
+  ```bash
+  node "${CLAUDE_PLUGIN_ROOT}/lib/issue-url.mjs" --context "setup" --message "<에러 메시지>" --stack "<스택트레이스>"
+  ```
+  출력된 URL을 사용자에게 보여주며: "이 문제를 GitHub 이슈로 보고하시겠습니까? [이슈 생성](<URL>)"
 
 ## Check Existing Config
 
