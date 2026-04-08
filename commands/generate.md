@@ -43,7 +43,7 @@ The user may provide a natural language request as arguments. Parse their intent
 - If the user specifies a specific date/period, set `force` to `yes` (they want it regenerated).
 - If no input is given, run in default mode (generate only missing reviews, no force).
 - For period types like "주간", "월간", "분기", "연간": generate the requested summary AND any prerequisite lower-level reviews needed as input.
-- When the user mentions a project name, generate reviews for all dates but only include logs from that project's cwd.
+- When the user mentions a project name, generate reviews for all dates but only include logs matching that project (by `project` field, which is `owner/repo` for git repos or directory basename for non-git).
 
 **Mode 판단 규칙:**
 - "블로그", "블로그용", "블로그로", "포스트" → `blog` (프리셋 가이드 적용)
@@ -99,7 +99,7 @@ If `gitActivity` has entries, verify account access before generating reviews:
 
 ## Step 2: Apply Filters
 
-- **Project filter**: If the user requested a specific project, filter `logs[date]` entries to only include those where the last path segment of `cwd` matches the project name.
+- **Project filter**: If the user requested a specific project, filter `logs[date]` entries to only include those whose `project` field matches. Match against both `owner/repo` format and the repo name alone (e.g., "claude-daily-review" matches "giwonn/claude-daily-review").
 - **Period type filter**: If the user only requested a specific period type (e.g., "주간 회고"), only generate that type and its prerequisites. For example, if weekly is requested, generate daily reviews first (as input), then the weekly summary.
 
 ## Step 3: Generate Daily Reviews
@@ -107,19 +107,19 @@ If `gitActivity` has entries, verify account access before generating reviews:
 For each date in `needs.daily`:
 
 1. Take all log entries from `logs[date]`
-2. Group by `cwd` (last path segment = project name)
+2. Group by `project` field (format: `owner/repo` for git repos, directory basename otherwise). Use the repo name (after `/`) as display name.
 3. For each project, further group by **topic** (feature, bug, task) based on conversation content. If a session covers multiple distinct features/topics within the same project, split them into separate sections. If only one topic exists, use a single section.
 4. For each project-topic group, analyze user/assistant pairs and extract:
    - **작업 요약**: What was accomplished (use profile for business context)
-   - **배운 것**: New things learned
-   - **고민한 포인트**: Decisions and reasoning
-   - **질문과 답변**: Key Q&A (summarized)
+   - **배운 것**: New things learned — include code snippets or configurations if present in the conversation
+   - **고민한 포인트**: Decisions and reasoning — preserve the alternatives considered and why each was chosen/rejected
+   - **질문과 답변**: Preserve Q&A close to the original wording. Do not over-summarize — the daily review is the closest record to the raw conversation.
    - **커밋 내역**: If `gitActivity[date]` has entries for this project's cwd (see below)
 5. General questions go under "미분류"
 
 ### Using Git Activity in Daily Reviews
 
-If `gitActivity[date]` has entries matching a project (by `cwd`):
+If `gitActivity[date]` has entries matching a project (by `project` field or `cwd`):
 
 1. Switch gh account if needed: `gh auth switch --user <ghAccount>`
 2. Parse `remote` to extract `owner/repo`:
@@ -135,6 +135,16 @@ Include in the review:
 - [`{short_hash}`](https://github.com/{owner}/{repo}/commit/{hash}) — {message}
 ```
 
+### Summarization Level by Period
+
+| 주기 | 수준 | 설명 |
+|------|------|------|
+| **Daily** | 거의 원문 보존 | Q&A 원문 유지, 코드 스니펫 포함, 대화 맥락 보존. 압축보다는 정리 위주. |
+| **Weekly** | 핵심 + 맥락 보존 | 왜 그런 결정을 했는지, 시행착오 과정은 유지. 반복적인 세부사항은 생략. |
+| **Monthly~** | 핵심 + 맥락 보존 | Weekly와 동일 수준. 프로젝트별 진행 흐름과 의사결정 맥락 유지. |
+
+**프로젝트 단위 요약은 항상 "핵심 + 맥락 보존" 수준을 유지한다.** 결정의 배경, 시행착오, 대안 비교는 포함하되 반복적인 디테일은 생략.
+
 ### Writing Guide by Mode
 
 #### Mode: review (기본 회고)
@@ -142,7 +152,7 @@ Include in the review:
 - **작업 요약**: 무엇을 했는지
 - **배운 것**: 새로 알게 된 것
 - **고민한 포인트**: 의사결정과 근거
-- **질문과 답변**: 주요 Q&A
+- **질문과 답변**: 주요 Q&A (일일 회고에서는 원문에 가깝게 유지)
 - **커밋 내역**: git 활동
 
 #### Mode: resume (경력기술서)

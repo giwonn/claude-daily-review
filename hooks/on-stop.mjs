@@ -7,8 +7,9 @@ import { formatDate } from '../lib/periods.mjs';
 import { getRawLogPath, getRawDir } from '../lib/vault.mjs';
 import { appendToBuffer, getUnflushedBytes, getUnflushedContent, markFlushed } from '../lib/buffer.mjs';
 import { updateIndex } from '../lib/index-manager.mjs';
+import { detectProject } from '../lib/project-detector.mjs';
 import { readFileSync, writeFileSync, mkdirSync } from 'fs';
-import { dirname, join, basename } from 'path';
+import { dirname, join } from 'path';
 
 function getLastUserEntry(transcriptPath) {
   try {
@@ -55,6 +56,7 @@ async function main() {
 
     const now = new Date().toISOString();
     const date = formatDate(new Date());
+    const project = detectProject(input.cwd);
     let lines = '';
 
     if (userMessage) {
@@ -63,6 +65,7 @@ async function main() {
         message: sanitize(userMessage),
         session_id: input.session_id,
         cwd: input.cwd,
+        project,
         timestamp: userTimestamp || now,
       }) + '\n';
     }
@@ -73,6 +76,7 @@ async function main() {
         message: sanitize(input.last_assistant_message),
         session_id: input.session_id,
         cwd: input.cwd,
+        project,
         timestamp: now,
       }) + '\n';
     }
@@ -82,7 +86,6 @@ async function main() {
       appendToBuffer(dataDir, input.session_id, lines);
 
       // Update index
-      const project = input.cwd ? basename(input.cwd) : 'unknown';
       updateIndex(dataDir, {
         sessionId: input.session_id,
         date,
