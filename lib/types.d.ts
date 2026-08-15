@@ -30,11 +30,17 @@ export interface StorageConfig {
   github?: GitHubStorageConfig;
 }
 
+export interface Sources {
+  /** Capture Codex CLI sessions (~/.codex/sessions). Defaults to enabled when omitted. */
+  codex?: boolean;
+}
+
 export interface Config {
   storage: StorageConfig;
   language: string;
   periods: Periods;
   profile: Profile;
+  sources?: Sources;
 }
 
 export interface StorageAdapter {

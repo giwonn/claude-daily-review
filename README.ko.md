@@ -11,6 +11,7 @@ AI와 함께하는 일상 개발 업무를 경력 문서로 변환하세요 — 
 ## 주요 기능
 
 - **자동 수집**: 매 턴마다 훅 기반 대화 기록 + 로컬 버퍼링
+- **Codex 캡처**: Codex CLI 세션도 자동으로 같은 회고에 수집 (Codex 설정 변경 불필요)
 - **온디맨드 회고 생성**: 원할 때 자연어로 회고 생성 (`/generate`)
 - **회고 모드**: 일일 회고, 경력기술서, 블로그, 커스텀 형식으로 생성
 - **자연어 타겟팅**: "어제 회고", "1분기 요약", "my-app 프로젝트 3월 회고"
@@ -229,6 +230,22 @@ daily-review/
     "team": "팀명",
     "context": "하는 일 한 줄 설명"
   }
+}
+```
+
+### Codex 캡처
+
+Codex CLI 대화도 Claude Code와 함께 자동으로 수집됩니다. Claude Code 세션이
+시작될 때마다 플러그인이 Codex rollout 로그(`$CODEX_HOME/sessions`, 기본값
+`~/.codex/sessions`)를 스캔해 새 메시지를 동일한 raw 로그 저장소로 수집합니다 —
+Codex 자체 설정은 전혀 건드리지 않습니다. 증분 방식(새 메시지만 추가)이며 Codex
+파일을 수정하지 않습니다.
+
+끄려면 `config.json`에서 `sources.codex`를 `false`로 설정하세요:
+
+```json
+{
+  "sources": { "codex": false }
 }
 ```
 

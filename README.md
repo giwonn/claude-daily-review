@@ -13,6 +13,7 @@ Turn your daily AI-assisted development work into career documentation — on de
 ## Features
 
 - **Auto-capture**: Hook-based conversation logging on every turn with local buffering
+- **Codex capture**: Codex CLI sessions are auto-ingested into the same reviews (no Codex config changes)
 - **On-demand reviews**: Generate reviews when you want with natural language (`/generate`)
 - **Review modes**: Generate as daily retrospective, career resume, blog post, or custom format
 - **Natural language targeting**: "yesterday's review", "Q1 summary", "my-app project March review"
@@ -229,6 +230,23 @@ Config is stored at `$CLAUDE_PLUGIN_DATA/config.json`.
     "team": "Your Team",
     "context": "What you do in one line"
   }
+}
+```
+
+### Codex capture
+
+Codex CLI conversations are captured automatically alongside Claude Code. On
+each Claude Code session start, the plugin scans Codex rollout logs
+(`$CODEX_HOME/sessions`, default `~/.codex/sessions`) and ingests any new
+messages into the same raw-log store — so reviews cover your Codex work with no
+changes to Codex's own config. Capture is incremental (only new messages are
+added) and never modifies Codex files.
+
+To disable, set `sources.codex` to `false` in `config.json`:
+
+```json
+{
+  "sources": { "codex": false }
 }
 ```
 

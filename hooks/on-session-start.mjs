@@ -96,7 +96,15 @@ async function main() {
       try { rmSync(sessionMetaDir, { recursive: true, force: true }); } catch {}
     }
 
-    // 3. Review reminder (2+ weeks since last generation)
+    // 3. Ingest Codex CLI sessions (auto-detected unless disabled in config)
+    if (config.sources?.codex !== false) {
+      try {
+        const { ingestCodexSessions } = await import('../lib/codex-ingest.mjs');
+        await ingestCodexSessions(storage, dataDir);
+      } catch {}
+    }
+
+    // 4. Review reminder (2+ weeks since last generation)
     try {
       const lastGenPath = join(dataDir, 'last-generated.json');
       if (existsSync(lastGenPath)) {
