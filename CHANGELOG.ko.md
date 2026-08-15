@@ -1,5 +1,11 @@
 # 변경 이력
 
+## 0.11.0
+
+- Codex CLI 세션 캡처 추가 — Codex 대화가 Claude Code와 동일한 데일리 리뷰에 자동 수집됨. Codex 자체 설정 변경 불필요
+- Claude Code 세션 시작 시 Codex rollout 로그(`$CODEX_HOME/sessions`, 기본값 `~/.codex/sessions`) 스캔. 증분 수집이며 Codex 파일을 수정하지 않음
+- 선택적 `sources.codex` 설정 플래그 추가 (기본값 활성화, `false`로 비활성화 가능)
+
 ## 0.8.0
 
 - 수동 버퍼 flush를 위한 `/flush` 커맨드 추가 — 원할 때 즉시 원격 저장소로 push

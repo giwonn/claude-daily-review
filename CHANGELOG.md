@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.11.0
+
+- Added Codex CLI session capture — Codex conversations are auto-ingested into the same daily reviews as Claude Code, with no changes to Codex's own config
+- Scans Codex rollout logs (`$CODEX_HOME/sessions`, default `~/.codex/sessions`) on Claude Code session start; ingest is incremental and never modifies Codex files
+- Added optional `sources.codex` config flag (defaults to enabled; set `false` to disable)
+
 ## 0.8.0
 
 - Added `/flush` command for manual buffer flush to remote storage on demand
